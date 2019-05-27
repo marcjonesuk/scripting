@@ -1,0 +1,43 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v3.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v3.0": {
+      "scriptlang/1.0.0": {
+        "dependencies": {
+          "Microsoft.WindowsDesktop.App.Ref": "3.0.0-preview4-27615-11",
+          "runtime.osx-x64.Microsoft.NETCore.DotNetAppHost": "3.0.0-preview4-27615-11"
+        },
+        "runtime": {
+          "scriptlang.dll": {}
+        }
+      },
+      "Microsoft.WindowsDesktop.App.Ref/3.0.0-preview4-27615-11": {},
+      "runtime.osx-x64.Microsoft.NETCore.DotNetAppHost/3.0.0-preview4-27615-11": {}
+    }
+  },
+  "libraries": {
+    "scriptlang/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.WindowsDesktop.App.Ref/3.0.0-preview4-27615-11": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-kAMuOVeJDQgeQEmHb6sAcfTDBdfsXk+e9AR86YXpxqNvYjX08EKidYiJx/WsUBY9wxeYsZQbBspYEtI1WA4d/A==",
+      "path": "microsoft.windowsdesktop.app.ref/3.0.0-preview4-27615-11",
+      "hashPath": "microsoft.windowsdesktop.app.ref.3.0.0-preview4-27615-11.nupkg.sha512"
+    },
+    "runtime.osx-x64.Microsoft.NETCore.DotNetAppHost/3.0.0-preview4-27615-11": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-JPRsocP3F9bxlt/ZFnaKcT1VoMkmg157gWiGIMGrU2RNI55H6eDJ4k7KAS79ORtkfBHfJjwECrp4WqAySu7XWA==",
+      "path": "runtime.osx-x64.microsoft.netcore.dotnetapphost/3.0.0-preview4-27615-11",
+      "hashPath": "runtime.osx-x64.microsoft.netcore.dotnetapphost.3.0.0-preview4-27615-11.nupkg.sha512"
+    }
+  }
+}

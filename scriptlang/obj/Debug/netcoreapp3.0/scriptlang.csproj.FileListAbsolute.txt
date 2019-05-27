@@ -1,0 +1,12 @@
+/Users/marcjones/Documents/projects/scriptlang/scriptlang/bin/Debug/netcoreapp3.0/scriptlang
+/Users/marcjones/Documents/projects/scriptlang/scriptlang/bin/Debug/netcoreapp3.0/scriptlang.deps.json
+/Users/marcjones/Documents/projects/scriptlang/scriptlang/bin/Debug/netcoreapp3.0/scriptlang.runtimeconfig.json
+/Users/marcjones/Documents/projects/scriptlang/scriptlang/bin/Debug/netcoreapp3.0/scriptlang.runtimeconfig.dev.json
+/Users/marcjones/Documents/projects/scriptlang/scriptlang/bin/Debug/netcoreapp3.0/scriptlang.dll
+/Users/marcjones/Documents/projects/scriptlang/scriptlang/bin/Debug/netcoreapp3.0/scriptlang.pdb
+/Users/marcjones/Documents/projects/scriptlang/scriptlang/obj/Debug/netcoreapp3.0/scriptlang.csprojAssemblyReference.cache
+/Users/marcjones/Documents/projects/scriptlang/scriptlang/obj/Debug/netcoreapp3.0/scriptlang.csproj.CoreCompileInputs.cache
+/Users/marcjones/Documents/projects/scriptlang/scriptlang/obj/Debug/netcoreapp3.0/scriptlang.AssemblyInfoInputs.cache
+/Users/marcjones/Documents/projects/scriptlang/scriptlang/obj/Debug/netcoreapp3.0/scriptlang.AssemblyInfo.cs
+/Users/marcjones/Documents/projects/scriptlang/scriptlang/obj/Debug/netcoreapp3.0/scriptlang.dll
+/Users/marcjones/Documents/projects/scriptlang/scriptlang/obj/Debug/netcoreapp3.0/scriptlang.pdb

@@ -1,0 +1,180 @@
+{
+  "version": 3,
+  "targets": {
+    ".NETCoreApp,Version=v3.0": {
+      "Microsoft.WindowsDesktop.App.Ref/3.0.0-preview4-27615-11": {
+        "type": "package",
+        "compile": {
+          "ref/netcoreapp3.0/_._": {}
+        }
+      },
+      "runtime.osx-x64.Microsoft.NETCore.DotNetAppHost/3.0.0-preview4-27615-11": {
+        "type": "package",
+        "runtimeTargets": {
+          "runtimes/osx-x64/native/_._": {
+            "assetType": "native",
+            "rid": "osx-x64"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "Microsoft.WindowsDesktop.App.Ref/3.0.0-preview4-27615-11": {
+      "sha512": "kAMuOVeJDQgeQEmHb6sAcfTDBdfsXk+e9AR86YXpxqNvYjX08EKidYiJx/WsUBY9wxeYsZQbBspYEtI1WA4d/A==",
+      "type": "package",
+      "path": "microsoft.windowsdesktop.app.ref/3.0.0-preview4-27615-11",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "LICENSE.TXT",
+        "Microsoft.WindowsDesktop.App.versions.txt",
+        "THIRD-PARTY-NOTICES.TXT",
+        "data/FrameworkList.xml",
+        "data/PlatformManifest.txt",
+        "microsoft.windowsdesktop.app.ref.3.0.0-preview4-27615-11.nupkg.sha512",
+        "microsoft.windowsdesktop.app.ref.nuspec",
+        "ref/netcoreapp3.0/Accessibility.dll",
+        "ref/netcoreapp3.0/Microsoft.Win32.Registry.dll",
+        "ref/netcoreapp3.0/Microsoft.Win32.SystemEvents.dll",
+        "ref/netcoreapp3.0/PresentationCore-CommonResources.dll",
+        "ref/netcoreapp3.0/PresentationCore.dll",
+        "ref/netcoreapp3.0/PresentationFramework-SystemCore.dll",
+        "ref/netcoreapp3.0/PresentationFramework-SystemData.dll",
+        "ref/netcoreapp3.0/PresentationFramework-SystemDrawing.dll",
+        "ref/netcoreapp3.0/PresentationFramework-SystemXml.dll",
+        "ref/netcoreapp3.0/PresentationFramework-SystemXmlLinq.dll",
+        "ref/netcoreapp3.0/PresentationFramework.Aero.dll",
+        "ref/netcoreapp3.0/PresentationFramework.Aero2.dll",
+        "ref/netcoreapp3.0/PresentationFramework.AeroLite.dll",
+        "ref/netcoreapp3.0/PresentationFramework.Classic.dll",
+        "ref/netcoreapp3.0/PresentationFramework.Luna.dll",
+        "ref/netcoreapp3.0/PresentationFramework.Royale.dll",
+        "ref/netcoreapp3.0/PresentationFramework.dll",
+        "ref/netcoreapp3.0/PresentationUI.dll",
+        "ref/netcoreapp3.0/ReachFramework.dll",
+        "ref/netcoreapp3.0/System.CodeDom.dll",
+        "ref/netcoreapp3.0/System.Configuration.ConfigurationManager.dll",
+        "ref/netcoreapp3.0/System.Design.dll",
+        "ref/netcoreapp3.0/System.Drawing.Common.dll",
+        "ref/netcoreapp3.0/System.Drawing.Design.dll",
+        "ref/netcoreapp3.0/System.Drawing.dll",
+        "ref/netcoreapp3.0/System.IO.Packaging.dll",
+        "ref/netcoreapp3.0/System.Printing.dll",
+        "ref/netcoreapp3.0/System.Security.AccessControl.dll",
+        "ref/netcoreapp3.0/System.Security.Cryptography.Cng.dll",
+        "ref/netcoreapp3.0/System.Security.Cryptography.Pkcs.dll",
+        "ref/netcoreapp3.0/System.Security.Cryptography.ProtectedData.dll",
+        "ref/netcoreapp3.0/System.Security.Cryptography.Xml.dll",
+        "ref/netcoreapp3.0/System.Security.Permissions.dll",
+        "ref/netcoreapp3.0/System.Security.Principal.Windows.dll",
+        "ref/netcoreapp3.0/System.Windows.Controls.Ribbon.dll",
+        "ref/netcoreapp3.0/System.Windows.Extensions.dll",
+        "ref/netcoreapp3.0/System.Windows.Forms.Design.Editors.dll",
+        "ref/netcoreapp3.0/System.Windows.Forms.Design.dll",
+        "ref/netcoreapp3.0/System.Windows.Forms.dll",
+        "ref/netcoreapp3.0/System.Windows.Input.Manipulations.dll",
+        "ref/netcoreapp3.0/System.Windows.Presentation.dll",
+        "ref/netcoreapp3.0/System.Xaml.dll",
+        "ref/netcoreapp3.0/UIAutomationClient.dll",
+        "ref/netcoreapp3.0/UIAutomationClientSideProviders.dll",
+        "ref/netcoreapp3.0/UIAutomationProvider.dll",
+        "ref/netcoreapp3.0/UIAutomationTypes.dll",
+        "ref/netcoreapp3.0/WindowsBase.dll",
+        "ref/netcoreapp3.0/WindowsFormsIntegration.dll"
+      ]
+    },
+    "runtime.osx-x64.Microsoft.NETCore.DotNetAppHost/3.0.0-preview4-27615-11": {
+      "sha512": "JPRsocP3F9bxlt/ZFnaKcT1VoMkmg157gWiGIMGrU2RNI55H6eDJ4k7KAS79ORtkfBHfJjwECrp4WqAySu7XWA==",
+      "type": "package",
+      "path": "runtime.osx-x64.microsoft.netcore.dotnetapphost/3.0.0-preview4-27615-11",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "LICENSE.TXT",
+        "THIRD-PARTY-NOTICES.TXT",
+        "runtime.osx-x64.microsoft.netcore.dotnetapphost.3.0.0-preview4-27615-11.nupkg.sha512",
+        "runtime.osx-x64.microsoft.netcore.dotnetapphost.nuspec",
+        "runtimes/osx-x64/native/apphost",
+        "version.txt"
+      ]
+    }
+  },
+  "projectFileDependencyGroups": {
+    ".NETCoreApp,Version=v3.0": [
+      "Microsoft.WindowsDesktop.App.Ref >= 3.0.0-preview4-27615-11",
+      "runtime.osx-x64.Microsoft.NETCore.DotNetAppHost >= 3.0.0-preview4-27615-11"
+    ]
+  },
+  "packageFolders": {
+    "/Users/marcjones/.nuget/packages/": {},
+    "/usr/local/share/dotnet/sdk/NuGetFallbackFolder": {}
+  },
+  "project": {
+    "version": "1.0.0",
+    "restore": {
+      "projectUniqueName": "/Users/marcjones/Documents/projects/scriptlang/scriptlang/scriptlang.csproj",
+      "projectName": "scriptlang",
+      "projectPath": "/Users/marcjones/Documents/projects/scriptlang/scriptlang/scriptlang.csproj",
+      "packagesPath": "/Users/marcjones/.nuget/packages/",
+      "outputPath": "/Users/marcjones/Documents/projects/scriptlang/scriptlang/obj/",
+      "projectStyle": "PackageReference",
+      "fallbackFolders": [
+        "/usr/local/share/dotnet/sdk/NuGetFallbackFolder"
+      ],
+      "configFilePaths": [
+        "/Users/marcjones/.nuget/NuGet/NuGet.Config"
+      ],
+      "originalTargetFrameworks": [
+        "netcoreapp3.0"
+      ],
+      "sources": {
+        "https://api.nuget.org/v3/index.json": {},
+        "https://dotnetfeed.blob.core.windows.net/aspnet-aspnetcore-tooling/index.json": {},
+        "https://dotnetfeed.blob.core.windows.net/aspnet-aspnetcore/index.json": {},
+        "https://dotnetfeed.blob.core.windows.net/aspnet-entityframeworkcore/index.json": {},
+        "https://dotnetfeed.blob.core.windows.net/aspnet-extensions/index.json": {},
+        "https://dotnetfeed.blob.core.windows.net/dotnet-core/index.json": {},
+        "https://dotnetfeed.blob.core.windows.net/dotnet-windowsdesktop/index.json": {}
+      },
+      "frameworks": {
+        "netcoreapp3.0": {
+          "projectReferences": {}
+        }
+      },
+      "warningProperties": {
+        "warnAsError": [
+          "NU1605"
+        ]
+      }
+    },
+    "frameworks": {
+      "netcoreapp3.0": {
+        "dependencies": {
+          "Microsoft.WindowsDesktop.App.Ref": {
+            "include": "None",
+            "suppressParent": "All",
+            "target": "Package",
+            "version": "[3.0.0-preview4-27615-11, )",
+            "autoReferenced": true
+          },
+          "runtime.osx-x64.Microsoft.NETCore.DotNetAppHost": {
+            "include": "None",
+            "suppressParent": "All",
+            "target": "Package",
+            "version": "[3.0.0-preview4-27615-11, )",
+            "autoReferenced": true
+          }
+        },
+        "imports": [
+          "net461"
+        ],
+        "assetTargetFallback": true,
+        "warn": true,
+        "frameworkReferences": [
+          "Microsoft.NETCore.App"
+        ]
+      }
+    }
+  }
+}
