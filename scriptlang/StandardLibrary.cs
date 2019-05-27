@@ -4,8 +4,7 @@ namespace scriptlang
 {
 	public class State
 	{
-		public static Dictionary<string, CustomFunction> Functions = new Dictionary<string, scriptlang.CustomFunction>();
-		public static Dictionary<string, object> Variables = new Dictionary<string, object>();
+		public static Dictionary<string, object> Functions = new Dictionary<string, object>();
 
 		static void AssertArgCount(object[] args, int count, string functionName)
 		{
@@ -29,11 +28,11 @@ namespace scriptlang
 				if (args.Length > 1)
 				{
 					var valueFunc = args[1] as ScriptFunction;
-					Variables[variableName] = valueFunc.Invoke();
+					Functions[variableName] = valueFunc.Invoke();
 				}
 				else
 				{
-					Variables[variableName] = null;
+					Functions[variableName] = null;
 				}
 
 				// Functions[varName] = new CustomFunction(varArgs =>
@@ -49,7 +48,7 @@ namespace scriptlang
 				// 	}
 				// 	throw new CompilerException("too many arguments");
 				// });
-				return Variables[variableName];
+				return Functions[variableName];
 			});
 
 			Functions["set"] = new CustomFunction(args =>
@@ -71,12 +70,16 @@ namespace scriptlang
 					varName = func.SymbolName;
 				}
 
-				if (!Variables.ContainsKey(varName))
+				if (!Functions.ContainsKey(varName))
 				{
 					throw new RuntimeException($"Variable {varName} has not been declared: please declare it before calling set");
 				}
 				var newValue = ((ScriptFunction)args[1]).Invoke();
-				Variables[varName] = newValue;
+				if (newValue is ScriptFunction sf) {
+					newValue = new CustomFunction(_ => sf.Invoke());
+				}
+
+				Functions[varName] = newValue;
 				return newValue;
 			});
 
@@ -115,7 +118,7 @@ namespace scriptlang
 				value++;
 				if (s.SymbolName != null)
 				{
-					Variables[s.SymbolName] = value;
+					Functions[s.SymbolName] = value;
 				}
 				return value;
 			});
@@ -128,7 +131,7 @@ namespace scriptlang
 				value--;
 				if (s.SymbolName != null)
 				{
-					Variables[s.SymbolName] = value;
+					Functions[s.SymbolName] = value;
 				}
 				return value;
 			});
@@ -187,9 +190,9 @@ namespace scriptlang
 				return !Truthy(args[0]);
 			});
 
-			Variables["null"] = null;
-			Variables["true"] = true;
-			Variables["false"] = false;
+			Functions["null"] = null;
+			Functions["true"] = true;
+			Functions["false"] = false;
 		}
 
 		static bool Truthy(object arg)

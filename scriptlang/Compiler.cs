@@ -251,7 +251,8 @@ namespace scriptlang
 				var (value, neof) = CompileStatement(en);
 				return (new ScriptFunction(() =>
 				{
-					return State.Functions["set"].Invoke(new object[] { symbolName, value });
+					// TODO can cache this one
+					return ((CustomFunction)State.Functions["set"]).Invoke(new object[] { symbolName, value });
 				})
 				{ SymbolName = symbolName }, neof);
 			}
@@ -259,10 +260,10 @@ namespace scriptlang
 			{
 				return (new ScriptFunction(() =>
 				{
-					if (!State.Variables.ContainsKey(symbolName))
+					if (!State.Functions.ContainsKey(symbolName))
 						throw new CompilerException($"Unknown symbol: {symbolName}");
 
-					return State.Variables[symbolName];
+					return State.Functions[symbolName];
 				})
 				{ SymbolName = symbolName }, eof);
 			}
@@ -312,10 +313,8 @@ namespace scriptlang
 					}
 				}
 
-				return State.Functions[symbolName].Invoke(args);
+				return ((CustomFunction)State.Functions[symbolName]).Invoke(args);
 			}), !en.MoveNext());
-
-
 
 			/*
              * Creates a function invocation that evaluates its arguments at runtime.
