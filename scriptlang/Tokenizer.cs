@@ -126,6 +126,7 @@ namespace scriptlang
 					case ']':
 					case '{':
 					case '}':
+					case '=':
 
 						if (retVal == null)
 						{

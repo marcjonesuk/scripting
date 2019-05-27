@@ -105,7 +105,12 @@ namespace scriptlang.tests
 		[TestMethod]
 		public void Assignments()
 		{
-			Test("var(x); x=5; x", 5);
+			// Test("var(x); x = -101.2;", -101.2);
+			// Test("var(x); x = 5; x", 5.0);
+			// Test("var(x); if(true, { set(x, 10.1) }); x", 10.1);
+			// Test("var(x); { x = 10.1 }; x", 10.1);
+			// Test("var(x); if(true, { x = 10.2 }); x", 10.2);
+			Test("var(x); var(y); y = { x = 10.2; true }; y()", true);
 		}
 
 		[TestMethod]

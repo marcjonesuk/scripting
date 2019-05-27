@@ -54,24 +54,30 @@ namespace scriptlang
 
 			Functions["set"] = new CustomFunction(args =>
 			{
-				var func = args[0] as ScriptFunction;
-
-				if (func == null)
-					throw new RuntimeException();
-
-				if (string.IsNullOrEmpty(func.SymbolName))
+				string varName;
+				if (args[0] is string s)
 				{
-					throw new RuntimeException("The first argument of the set function should be a valid symbol");
+					varName = s;
 				}
-
-				var varName = func.SymbolName;
+				else
+				{
+					var func = args[0] as ScriptFunction;
+					if (func == null)
+						throw new RuntimeException();
+					if (string.IsNullOrEmpty(func.SymbolName))
+					{
+						throw new RuntimeException("The first argument of the set function should be a valid symbol");
+					}
+					varName = func.SymbolName;
+				}
 
 				if (!Variables.ContainsKey(varName))
 				{
 					throw new RuntimeException($"Variable {varName} has not been declared: please declare it before calling set");
 				}
-				Variables[varName] = ((ScriptFunction)args[1]).Invoke();
-				return args[1];
+				var newValue = ((ScriptFunction)args[1]).Invoke();
+				Variables[varName] = newValue;
+				return newValue;
 			});
 
 			Functions["test"] = new CustomFunction(_ => "test output");
@@ -83,16 +89,17 @@ namespace scriptlang
 			});
 			Functions["add"] = new CustomFunction(args =>
 			{
-				if (args[0] is List<object>) {
+				if (args[0] is List<object>)
+				{
 
 				}
 
 				return (double)args[0] + (double)args[1];
 			});
-			
+
 			Functions["len"] = new CustomFunction(args =>
 			{
-				if (args[0] is string s) 
+				if (args[0] is string s)
 					return s.Length;
 				if (args[0] is IList<object> l)
 					return l.Count;

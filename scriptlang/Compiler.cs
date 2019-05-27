@@ -244,6 +244,17 @@ namespace scriptlang
 				//return ApplyArguments<TContext>(symbolName, en);
 				return (ApplyArguments(symbolName, en));
 			}
+			else if (!eof && en.Current.ToString() == "=") 
+			{
+				// Variable assignment
+				en.MoveNext();
+				var (value, neof) = CompileStatement(en);
+				return (new ScriptFunction(() =>
+				{
+					return State.Functions["set"].Invoke(new object[] { symbolName, value });
+				})
+				{ SymbolName = symbolName }, neof);
+			}
 			else
 			{
 				return (new ScriptFunction(() =>
