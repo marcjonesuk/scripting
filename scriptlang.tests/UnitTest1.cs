@@ -183,6 +183,9 @@ namespace scriptlang.tests
 			Test("var(y); y = list.new(1, 2); list.push(y, 1, 2, 3, -10, -9); list.length(y)", 7);
 			Test("var(y); y = [3,5,8]; list.indexOf(y, 5)", 1);
 			Test("var(y); y = [3,5,8]; list.indexOf(y, 7)", -1);
+
+			
+
 			// Test("var(y); y = [3,5,8,12]; len(list.splice(1, 2));", 2);
 		}
 	}

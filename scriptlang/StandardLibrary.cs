@@ -1,8 +1,16 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Dynamic;
 
 namespace scriptlang
 {
+	public class FunctionDefinition 
+	{
+		public int MinArgs; 
+		public int MaxArgs;
+		public 
+	}
+
 	public class Array
 	{
 		public static void Do(Dictionary<string, object> functions)
@@ -71,6 +79,8 @@ namespace scriptlang
 			}
 		}
 
+		static void Register(string name, CustomFunction customFunction)
+
 		static State()
 		{
 			Const.Add("var");
@@ -94,7 +104,7 @@ namespace scriptlang
 				}
 				return Functions[variableName];
 			});
-			
+
 			Const.Add("const");
 			Functions["const"] = new CustomFunction(args =>
 			{
@@ -153,6 +163,11 @@ namespace scriptlang
 
 				Functions[varName] = newValue;
 				return newValue;
+			});
+
+			Functions["new"] = new CustomFunction(args =>
+			{
+				return new ExpandoObject();
 			});
 
 			Functions["add"] = new CustomFunction(args =>

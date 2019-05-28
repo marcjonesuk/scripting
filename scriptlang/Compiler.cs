@@ -320,42 +320,6 @@ namespace scriptlang
 
 				return ((CustomFunction)State.Functions[symbolName]).Invoke(args);
 			}), !en.MoveNext());
-
-			/*
-             * Creates a function invocation that evaluates its arguments at runtime.
-             */
-			// return new Tuple<object, bool>(new FunctionAsync<TContext>(async (ctx, binder, args) =>
-			// {
-			// 	var (symbol, parent) = MemberGetter.Get(binder, symbolName);
-			// 	object[] argsArray = new object[arguments.Count];
-
-			// 	for (var i = 0; i < argsArray.Length; i++)
-			// 	{
-			// 		var ix = arguments[i];
-			// 		object result;
-			// 		if (ix is FunctionAsync<TContext> funcAsync)
-			// 			result = await funcAsync(ctx, binder, null);
-			// 		else
-			// 			result = ((Function<TContext>)ix)(ctx, binder, null);
-
-			// 		argsArray[i] = result;
-			// 	}
-
-			// 	if (argsArray.Length == 1 && argsArray.Get(0) is AppliedArguments explicitlyApplied)
-			// 	{
-			// 		argsArray = explicitlyApplied.Arguments;
-			// 	}
-
-			// 	// Retrieving symbol's value and doing some basic sanity checks.
-
-			// 	if (symbol == null)
-			// 		throw new LizzieRuntimeException($"Symbol '{symbolName}' is null.");
-			// 	if (symbol is FunctionAsync<TContext> asyncFunctor)
-			// 		return await asyncFunctor(ctx, binder, argsArray); // Success!
-			// 	if (symbol is Function<TContext> functor)
-			// 		return functor(ctx, binder, argsArray); // Success!
-			// 	throw new LizzieRuntimeException($"'{symbolName}' is not a function, but a '{symbol.GetType().FullName}'");
-			// }), !en.MoveNext());
 		}
 
 		static (ScriptFunction, bool) CompileSymbolReference(IEnumerator<Token> en)

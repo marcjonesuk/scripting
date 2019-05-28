@@ -1,24 +1,26 @@
 ﻿using System;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace scriptlang
 {
-	public delegate object Function<TContext>(object[] arguments);
-
 	public class ScriptFunction
 	{
 		public string SymbolName {get;set;}
 		public Func<object> Invoke { get; }
 		public Func<Task<object>> InvokeAsync { get; }
+		public bool AsyncFunction {get;}
 
 		public ScriptFunction(Func<object> func)
 		{
 			Invoke = func;
+			AsyncFunction  = false;
 		}
 
 		public ScriptFunction(Func<Task<object>> func)
 		{
 			InvokeAsync = func;
+			AsyncFunction  = true;
 		}
 	}
 
@@ -56,9 +58,7 @@ namespace scriptlang
 	{
 		static void Main(string[] args)
 		{
-			//var code = @"write('hello')";
-			var code = "10";
-			var tokenizer = new Tokenizer(new LizzieTokenizer());
+			File.ReadAllText("test.script");
 			var func = Compiler.Compile(tokenizer.Tokenize(code));
 			Console.WriteLine(func.Invoke());
 		}
