@@ -65,19 +65,19 @@ namespace scriptlang.tests
 			Test("var(x, -100.0); x", -100.0);
 		}
 
-		[TestMethod]
-		public void Const()
-		{
-			TestThrows<RuntimeException>("const(x); x");
-			TestThrows<RuntimeException>("const(x, 5.0); x = 6.0");
-			Test("const(x, 5.0)", 5.0);
-			Test("const(x, 5.0); x", 5.0);
-			Test("const(x, 5.0); try({ x = 6.0}); x", 5.0);
-			TestThrows<RuntimeException>("if = { }");
-			TestThrows<RuntimeException>("try = { }");
-			TestThrows<RuntimeException>("set = { }");
-			TestThrows<RuntimeException>("var = { }");
-		}
+		// [TestMethod]
+		// public void Const()
+		// {
+		// 	TestThrows<RuntimeException>("const(x); x");
+		// 	TestThrows<RuntimeException>("const(x, 5.0); x = 6.0");
+		// 	Test("const(x, 5.0)", 5.0);
+		// 	Test("const(x, 5.0); x", 5.0);
+		// 	Test("const(x, 5.0); try({ x = 6.0}); x", 5.0);
+		// 	TestThrows<RuntimeException>("if = { }");
+		// 	TestThrows<RuntimeException>("try = { }");
+		// 	TestThrows<RuntimeException>("set = { }");
+		// 	TestThrows<RuntimeException>("var = { }");
+		// }
 
 		[TestMethod]
 		public void Variables_sets()
@@ -116,7 +116,7 @@ namespace scriptlang.tests
 		[TestMethod]
 		public void If()
 		{
-			Test("var(x, false); if(true, { set(x, true) }); x", true);
+			Test("x = false; if(true, { x = true }); x", true);
 			Test("var(x, false); if(false, { set(x, true) }); x", false);
 			Test("if(true, { 'ok' })", "ok");
 			Test("if(eq(null, false), { 5 }, { 10 })", 10.0);
@@ -124,7 +124,7 @@ namespace scriptlang.tests
 			Test("var(x, if(false, 'not ok', 'ok')); x", "ok");
 			TestThrows<CompilerException>("if");
 			TestThrows<CompilerException>("if { }");
-			TestThrows<CompilerException>("if = null");
+			TestThrows<RuntimeException>("if = null");
 		}
 
 		[TestMethod]
@@ -162,10 +162,9 @@ namespace scriptlang.tests
 		[TestMethod]
 		public void Lambda_expression()
 		{
-			// Test("y = { inc(args(0)) }; y(100)", 101.0);
-			// Test("y = { z = { add(args(0), args(1)) }; z(args(0), 20) }; y(10)", 30.0);
-			// Test("y = { z = { 10 } }; y()()", 10.0);
-
+			Test("y = { inc(args(0)) }; y(100)", 101.0);
+			Test("y = { z = { add(args(0), args(1)) }; z(args(0), 20) }; y(10)", 30.0);
+			Test("y = { z = { 10 } }; y()()", 10.0);
 			Test("y = { z = { add(10, args(0)) } }; y()(10)", 20.0);
 			// Test("y = { a = new(); a.name = args(0); a }; y('bob')");
 		}
@@ -188,9 +187,6 @@ namespace scriptlang.tests
 			Test("var(y); y = list.new(1, 2); list.push(y, 1, 2, 3, -10, -9); list.length(y)", 7);
 			Test("var(y); y = [3,5,8]; list.indexOf(y, 5)", 1);
 			Test("var(y); y = [3,5,8]; list.indexOf(y, 7)", -1);
-
-
-
 			// Test("var(y); y = [3,5,8,12]; len(list.splice(1, 2));", 2);
 		}
 
