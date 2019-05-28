@@ -140,29 +140,34 @@ namespace scriptlang.tests
 		[TestMethod]
 		public void Assignments()
 		{
-			Test("var(x); x = -101.2;", -101.2);
-			Test("var(x); x = 5; x", 5.0);
-			Test("var(x); if(true, { set(x, 10.1) }); x", 10.1);
-			Test("var(x); x = 10.1; x", 10.1);
-			Test("var(x); if(true, { x = 10.2 }); x", 10.2);
-			Test("var(x); var(y); y = { x = 10.2; true }; not(y())", false);
+			Test("x = -101.2;", -101.2);
+			Test("x = 5; x", 5.0);
+			//Test("if(true, { set(x, 10.1) }); x", 10.1);
+			Test("x = 10.1; x", 10.1);
+			Test("if(true, { x = 10.2 }); x", 10.2);
+			Test("y = { x = 10.2; true }; not(y())", false);
 		}
 
 		[TestMethod]
 		public void Try_catch()
 		{
-			Test("try({ x = 19 })", null);
-			Test("try({ x = 19 }, { true })", true);
-			Test("var(x); try({ x = 19; 15 }, { true })", 15.0);
-			TestThrows<CompilerException>("try");
-			TestThrows<CompilerException>("try { }");
+			// Test("try({ throw('error') })", null);
+			Test("try({ throw('error') }, { true })", true);
+			Test("try({ throw('error') }, { args(0) })", "error");
+			// Test("var(x); try({ x = 19; 15 }, { true })", 15.0);
+			// TestThrows<CompilerException>("try");
+			// TestThrows<CompilerException>("try { }");
 		}
 
 		[TestMethod]
 		public void Lambda_expression()
 		{
-			// not implemented
-			// Test("var(y); y = () => { true }; not(y())", false);
+			// Test("y = { inc(args(0)) }; y(100)", 101.0);
+			// Test("y = { z = { add(args(0), args(1)) }; z(args(0), 20) }; y(10)", 30.0);
+			// Test("y = { z = { 10 } }; y()()", 10.0);
+
+			Test("y = { z = { add(10, args(0)) } }; y()(10)", 20.0);
+			// Test("y = { a = new(); a.name = args(0); a }; y('bob')");
 		}
 
 		[TestMethod]
@@ -184,9 +189,15 @@ namespace scriptlang.tests
 			Test("var(y); y = [3,5,8]; list.indexOf(y, 5)", 1);
 			Test("var(y); y = [3,5,8]; list.indexOf(y, 7)", -1);
 
-			
+
 
 			// Test("var(y); y = [3,5,8,12]; len(list.splice(1, 2));", 2);
+		}
+
+		[TestMethod]
+		public void Arguments()
+		{
+			Test("y = { args(0) }; y(10)", 10.0);
 		}
 	}
 }

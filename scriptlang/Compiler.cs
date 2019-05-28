@@ -85,9 +85,9 @@ namespace scriptlang
 			switch (en.Current.ToString())
 			{
 				case "[":
-				 	return CompileList(en);
+					return CompileList(en);
 				case "{":
-				 	return CompileLambda(en);
+					return CompileLambda(en);
 				case "@":
 					return CompileSymbolReference(en);
 				// case "\"":
@@ -169,7 +169,7 @@ namespace scriptlang
 
 		// static (ScriptFunction, bool) ApplyArguments(string symbolName, IEnumerator<Token> en)
 		// {
-			
+
 
 		// 	return (new ScriptFunction(() =>
 		// 	{
@@ -224,6 +224,43 @@ namespace scriptlang
 			}), !en.MoveNext());
 		}
 
+		static (ScriptFunction, bool) CompileChainedCall(IEnumerator<Token> en, ScriptFunction sf)
+		{
+			// Used to hold arguments before they're being applied inside of function evaluation.
+			var arguments = new List<ScriptFunction>();
+
+			// Sanity checking tokenizer's content.
+			if (!en.MoveNext())
+				throw new CompilerException("Unexpected EOF while parsing function invocation.");
+
+			// Looping through all arguments, if there are any.
+			while (en.Current != ")")
+			{
+				// Compiling current argument.
+				var (func, eof) = CompileStatement(en);
+				arguments.Add(func);
+				if (en.Current == ")")
+					break; // And we are done parsing arguments.
+			}
+
+			return (new ScriptFunction(() =>
+			{
+				var args = new object[arguments.Count];
+				for (var a = 0; a < arguments.Count; a++)
+				{
+					var value = arguments[a].Invoke();
+					args[a] = value;
+				}
+				
+				var result = sf.Invoke();
+				var s = result as CustomFunction;
+				if (s == null) {
+					throw new RuntimeException("Unable to invoke result");
+				}
+				return s.Invoke(args);
+			}), !en.MoveNext());
+		}
+
 		/*
          * Compiles a symbolic reference down to a function invocation and returns
          * that function to caller.
@@ -242,9 +279,14 @@ namespace scriptlang
 			{
 				// Function invocation, making sure we apply arguments,
 				//return ApplyArguments<TContext>(symbolName, en);
-				return (ApplyArguments(symbolName, en));
+				var x = (ApplyArguments(symbolName, en));
+				if (en.Current == "(")
+				{
+					return CompileChainedCall(en, x.Item1);
+				}
+				return x;
 			}
-			else if (!eof && en.Current.ToString() == "=") 
+			else if (!eof && en.Current.ToString() == "=")
 			{
 				// Variable assignment
 				en.MoveNext();
@@ -258,10 +300,12 @@ namespace scriptlang
 			}
 			else
 			{
-				if (symbolName == "try") {
+				if (symbolName == "try")
+				{
 					throw new CompilerException("try function does not have any arguments. Example: try({ ... }, /* catch */ { ... })");
 				}
-				if (symbolName == "if") {
+				if (symbolName == "if")
+				{
 					throw new CompilerException("if function does not have any arguments. Example: if({ ... }, /* else */ { ... })");
 				}
 				return (new ScriptFunction(() =>

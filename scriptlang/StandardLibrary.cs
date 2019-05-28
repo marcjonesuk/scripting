@@ -1,16 +1,10 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Dynamic;
 
 namespace scriptlang
 {
-	public class FunctionDefinition 
-	{
-		public int MinArgs; 
-		public int MaxArgs;
-		public 
-	}
-
 	public class Array
 	{
 		public static void Do(Dictionary<string, object> functions)
@@ -34,6 +28,8 @@ namespace scriptlang
 				}
 				return list;
 			});
+
+
 			functions["list.indexOf"] = new CustomFunction(args =>
 			{
 				if (args[0] is IList l)
@@ -68,6 +64,7 @@ namespace scriptlang
 
 	public class State
 	{
+		public static Stack<object[]> Args = new Stack<object[]>();
 		public static Dictionary<string, object> Functions = new Dictionary<string, object>();
 		public static HashSet<string> Const = new HashSet<string>();
 
@@ -79,7 +76,9 @@ namespace scriptlang
 			}
 		}
 
-		static void Register(string name, CustomFunction customFunction)
+		static void Register(string name, CustomFunction customFunction) {
+
+		}
 
 		static State()
 		{
@@ -103,6 +102,12 @@ namespace scriptlang
 					Functions[variableName] = null;
 				}
 				return Functions[variableName];
+			});
+
+			Functions["args"] = new CustomFunction(args => 
+			{
+				var index = (int)Convert.ChangeType(args[0], typeof(int));
+				return Args.Peek()[index];
 			});
 
 			Const.Add("const");
@@ -151,18 +156,26 @@ namespace scriptlang
 				{
 					throw new RuntimeException($"Cannot assign to const variable {varName}");
 				}
-				if (!Functions.ContainsKey(varName))
-				{
-					throw new RuntimeException($"Variable {varName} has not been declared: please declare it before calling set");
-				}
 				var newValue = ((ScriptFunction)args[1]).Invoke();
 				if (newValue is ScriptFunction sf)
 				{
-					newValue = new CustomFunction(_ => sf.Invoke());
+					newValue = new CustomFunction(lambdaArgs => 
+					{ 
+						Args.Push(lambdaArgs);
+						var result = sf.Invoke();
+						Args.Pop();
+						return result;
+					});
 				}
 
 				Functions[varName] = newValue;
 				return newValue;
+			});
+
+			Const.Add("throw");
+			Functions["throw"] = new CustomFunction(args =>
+			{
+				throw new Exception(args[0].ToString());
 			});
 
 			Functions["new"] = new CustomFunction(args =>
@@ -298,16 +311,19 @@ namespace scriptlang
 					}
 					return null;
 				}
-				catch
+				catch(Exception ex)
 				{
 					if (args.Length > 1)
 					{
 						if (args[1] is ScriptFunction c)
 						{
-							return c.Invoke();
+							Args.Push(new object[] { ex.Message });
+							var result = c.Invoke();
+							Args.Pop();
+							return result;
 						}
 					}
-					return null;
+					return ex;
 				}
 			});
 

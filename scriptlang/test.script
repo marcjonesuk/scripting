@@ -1,0 +1,9 @@
+
+
+
+
+
+result = try ({ blah })
+if (isError(result), {
+
+})
