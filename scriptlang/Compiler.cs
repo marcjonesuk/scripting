@@ -258,11 +258,16 @@ namespace scriptlang
 			}
 			else
 			{
+				if (symbolName == "try") {
+					throw new CompilerException("try function does not have any arguments. Example: try({ ... }, /* catch */ { ... })");
+				}
+				if (symbolName == "if") {
+					throw new CompilerException("if function does not have any arguments. Example: if({ ... }, /* else */ { ... })");
+				}
 				return (new ScriptFunction(() =>
 				{
 					if (!State.Functions.ContainsKey(symbolName))
-						throw new CompilerException($"Unknown symbol: {symbolName}");
-
+						throw new RuntimeException($"Unknown symbol: {symbolName}");
 					return State.Functions[symbolName];
 				})
 				{ SymbolName = symbolName }, eof);
@@ -302,7 +307,7 @@ namespace scriptlang
 				var args = new object[arguments.Count];
 				for (var a = 0; a < arguments.Count; a++)
 				{
-					if (symbolName != "var" && symbolName != "set" && symbolName != "inc" && symbolName != "dec")
+					if (symbolName != "var" && symbolName != "const" && symbolName != "set" && symbolName != "inc" && symbolName != "dec")
 					{
 						var value = arguments[a].Invoke();
 						args[a] = value;

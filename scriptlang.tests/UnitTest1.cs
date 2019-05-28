@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using scriptlang;
@@ -12,6 +13,23 @@ namespace scriptlang.tests
 			var tokenizer = new Tokenizer(new LizzieTokenizer());
 			var func = Compiler.Compile(tokenizer.Tokenize(code));
 			Assert.AreEqual(expected, func());
+		}
+
+		public void TestThrows<TException>(string code)
+		{
+			Exception ex = null;
+			try
+			{
+				var tokenizer = new Tokenizer(new LizzieTokenizer());
+				var func = Compiler.Compile(tokenizer.Tokenize(code));
+				func();
+			}
+			catch (Exception e)
+			{
+				ex = e;
+			}
+			Assert.IsNotNull(ex, "Did not throw exception");
+			Assert.AreEqual(typeof(TException), ex.GetType());
 		}
 
 		[TestMethod]
@@ -48,6 +66,20 @@ namespace scriptlang.tests
 		}
 
 		[TestMethod]
+		public void Const()
+		{
+			TestThrows<RuntimeException>("const(x); x");
+			TestThrows<RuntimeException>("const(x, 5.0); x = 6.0");
+			Test("const(x, 5.0)", 5.0);
+			Test("const(x, 5.0); x", 5.0);
+			Test("const(x, 5.0); try({ x = 6.0}); x", 5.0);
+			TestThrows<RuntimeException>("if = { }");
+			TestThrows<RuntimeException>("try = { }");
+			TestThrows<RuntimeException>("set = { }");
+			TestThrows<RuntimeException>("var = { }");
+		}
+
+		[TestMethod]
 		public void Variables_sets()
 		{
 			Test("var(x); set(x, 199); x", 199.0);
@@ -80,7 +112,7 @@ namespace scriptlang.tests
 			Test("var(x, 'hello, world'); eq('hello, world ', x)", false);
 			Test("eq(1.0, 1)", true);
 		}
-		
+
 		[TestMethod]
 		public void If()
 		{
@@ -90,6 +122,9 @@ namespace scriptlang.tests
 			Test("if(eq(null, false), { 5 }, { 10 })", 10.0);
 			Test("if('hello, world', 'ok', 'not ok')", "ok");
 			Test("var(x, if(false, 'not ok', 'ok')); x", "ok");
+			TestThrows<CompilerException>("if");
+			TestThrows<CompilerException>("if { }");
+			TestThrows<CompilerException>("if = null");
 		}
 
 		[TestMethod]
@@ -110,7 +145,24 @@ namespace scriptlang.tests
 			Test("var(x); if(true, { set(x, 10.1) }); x", 10.1);
 			Test("var(x); x = 10.1; x", 10.1);
 			Test("var(x); if(true, { x = 10.2 }); x", 10.2);
-			Test("var(x); var(y); y = { x = 10.2; true }; y()", true);
+			Test("var(x); var(y); y = { x = 10.2; true }; not(y())", false);
+		}
+
+		[TestMethod]
+		public void Try_catch()
+		{
+			Test("try({ x = 19 })", null);
+			Test("try({ x = 19 }, { true })", true);
+			Test("var(x); try({ x = 19; 15 }, { true })", 15.0);
+			TestThrows<CompilerException>("try");
+			TestThrows<CompilerException>("try { }");
+		}
+
+		[TestMethod]
+		public void Lambda_expression()
+		{
+			// not implemented
+			// Test("var(y); y = () => { true }; not(y())", false);
 		}
 
 		[TestMethod]
@@ -125,6 +177,13 @@ namespace scriptlang.tests
 			var list = (List<object>)Compiler.Compile(tokenizer.Tokenize(code))();
 			Assert.AreEqual(3, list.Count);
 			Assert.AreEqual(8.0, list[2]);
+
+			Test("var(y); y = [3,5,8,'a',-1]; list.push(y, 1); list.length(y)", 6);
+			Test("var(y); y = [3,5,8]; clear(y); len(y)", 0);
+			Test("var(y); y = list.new(1, 2); list.push(y, 1, 2, 3, -10, -9); list.length(y)", 7);
+			Test("var(y); y = [3,5,8]; list.indexOf(y, 5)", 1);
+			Test("var(y); y = [3,5,8]; list.indexOf(y, 7)", -1);
+			// Test("var(y); y = [3,5,8,12]; len(list.splice(1, 2));", 2);
 		}
 	}
 }
