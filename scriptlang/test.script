@@ -1,9 +1,20 @@
 
 
+trythenlog = {
+	try({
+		args(0)('starting')
+		write('ok')
+	}, {
+		error = args(0)
+		write(add('error:', error))
+	})
+}
 
-
-
-result = try ({ blah })
-if (isError(result), {
-
+trythenlog({
+	x = 10
+	write(args(0))
+	throw('fuck')
 })
+
+write(x)
+

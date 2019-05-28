@@ -255,6 +255,9 @@ namespace scriptlang
 				var result = sf.Invoke();
 				var s = result as CustomFunction;
 				if (s == null) {
+					if (result is ScriptFunction c) {
+						return c.Invoke();
+					}
 					throw new RuntimeException("Unable to invoke result");
 				}
 				return s.Invoke(args);

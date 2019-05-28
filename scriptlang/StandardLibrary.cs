@@ -178,6 +178,11 @@ namespace scriptlang
 				throw new Exception(args[0].ToString());
 			});
 
+			Functions["write"] = new CustomFunction(args =>
+			{
+				Console.WriteLine(args[0].ToString());
+				return null;
+			});
 			Functions["new"] = new CustomFunction(args =>
 			{
 				return new ExpandoObject();
@@ -185,12 +190,7 @@ namespace scriptlang
 
 			Functions["add"] = new CustomFunction(args =>
 			{
-				if (args[0] is List<object>)
-				{
-
-				}
-
-				return (double)args[0] + (double)args[1];
+				return (dynamic)args[0] + (dynamic)args[1];
 			});
 
 			Functions["len"] = new CustomFunction(args =>

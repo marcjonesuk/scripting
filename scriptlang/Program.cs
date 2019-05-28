@@ -38,9 +38,10 @@ namespace scriptlang
 	{
 		static void Main(string[] args)
 		{
-			// File.ReadAllText("test.script");
-			// var func = Compiler.Compile(tokenizer.Tokenize(code));
-			// Console.WriteLine(func.Invoke());
+			var code = File.ReadAllText("test.script");
+			var tokenizer = new Tokenizer(new LizzieTokenizer());
+			var func = Compiler.Compile(tokenizer.Tokenize(code));
+			Console.WriteLine(func.Invoke());
 		}
 	}
 }
