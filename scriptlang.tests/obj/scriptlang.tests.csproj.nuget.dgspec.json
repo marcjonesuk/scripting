@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "/Users/marcjones/Documents/projects/scriptlang/scriptlang.tests/scriptlang.tests.csproj": {}
+    "/Users/maisiesadler/dotnetcore/scripting/scriptlang.tests/scriptlang.tests.csproj": {}
   },
   "projects": {
-    "/Users/marcjones/Documents/projects/scriptlang/scriptlang.tests/scriptlang.tests.csproj": {
+    "/Users/maisiesadler/dotnetcore/scripting/scriptlang.tests/scriptlang.tests.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/marcjones/Documents/projects/scriptlang/scriptlang.tests/scriptlang.tests.csproj",
+        "projectUniqueName": "/Users/maisiesadler/dotnetcore/scripting/scriptlang.tests/scriptlang.tests.csproj",
         "projectName": "scriptlang.tests",
-        "projectPath": "/Users/marcjones/Documents/projects/scriptlang/scriptlang.tests/scriptlang.tests.csproj",
-        "packagesPath": "/Users/marcjones/.nuget/packages/",
-        "outputPath": "/Users/marcjones/Documents/projects/scriptlang/scriptlang.tests/obj/",
+        "projectPath": "/Users/maisiesadler/dotnetcore/scripting/scriptlang.tests/scriptlang.tests.csproj",
+        "packagesPath": "/Users/maisiesadler/.nuget/packages/",
+        "outputPath": "/Users/maisiesadler/dotnetcore/scripting/scriptlang.tests/obj/",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "/usr/local/share/dotnet/sdk/NuGetFallbackFolder"
         ],
         "configFilePaths": [
-          "/Users/marcjones/.nuget/NuGet/NuGet.Config"
+          "/Users/maisiesadler/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "netcoreapp3.0"
@@ -34,8 +34,8 @@
         "frameworks": {
           "netcoreapp3.0": {
             "projectReferences": {
-              "/Users/marcjones/Documents/projects/scriptlang/scriptlang/scriptlang.csproj": {
-                "projectPath": "/Users/marcjones/Documents/projects/scriptlang/scriptlang/scriptlang.csproj"
+              "/Users/maisiesadler/dotnetcore/scripting/scriptlang/scriptlang.csproj": {
+                "projectPath": "/Users/maisiesadler/dotnetcore/scripting/scriptlang/scriptlang.csproj"
               }
             }
           }
@@ -64,14 +64,7 @@
             "Microsoft.NETCore.Platforms": {
               "suppressParent": "All",
               "target": "Package",
-              "version": "[3.0.0-preview4.19212.13, )",
-              "autoReferenced": true
-            },
-            "Microsoft.WindowsDesktop.App.Ref": {
-              "include": "None",
-              "suppressParent": "All",
-              "target": "Package",
-              "version": "[3.0.0-preview4-27615-11, )",
+              "version": "[3.0.0-preview5.19224.8, )",
               "autoReferenced": true
             }
           },
@@ -80,26 +73,32 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.WindowsDesktop.App.Ref",
+              "version": "[3.0.0-preview5-27626-15, 3.0.0-preview5-27626-15]"
+            }
+          ],
           "frameworkReferences": [
             "Microsoft.NETCore.App"
           ]
         }
       }
     },
-    "/Users/marcjones/Documents/projects/scriptlang/scriptlang/scriptlang.csproj": {
+    "/Users/maisiesadler/dotnetcore/scripting/scriptlang/scriptlang.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/marcjones/Documents/projects/scriptlang/scriptlang/scriptlang.csproj",
+        "projectUniqueName": "/Users/maisiesadler/dotnetcore/scripting/scriptlang/scriptlang.csproj",
         "projectName": "scriptlang",
-        "projectPath": "/Users/marcjones/Documents/projects/scriptlang/scriptlang/scriptlang.csproj",
-        "packagesPath": "/Users/marcjones/.nuget/packages/",
-        "outputPath": "/Users/marcjones/Documents/projects/scriptlang/scriptlang/obj/",
+        "projectPath": "/Users/maisiesadler/dotnetcore/scripting/scriptlang/scriptlang.csproj",
+        "packagesPath": "/Users/maisiesadler/.nuget/packages/",
+        "outputPath": "/Users/maisiesadler/dotnetcore/scripting/scriptlang/obj/",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "/usr/local/share/dotnet/sdk/NuGetFallbackFolder"
         ],
         "configFilePaths": [
-          "/Users/marcjones/.nuget/NuGet/NuGet.Config"
+          "/Users/maisiesadler/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "netcoreapp3.0"
@@ -126,27 +125,17 @@
       },
       "frameworks": {
         "netcoreapp3.0": {
-          "dependencies": {
-            "Microsoft.WindowsDesktop.App.Ref": {
-              "include": "None",
-              "suppressParent": "All",
-              "target": "Package",
-              "version": "[3.0.0-preview4-27615-11, )",
-              "autoReferenced": true
-            },
-            "runtime.osx-x64.Microsoft.NETCore.DotNetAppHost": {
-              "include": "None",
-              "suppressParent": "All",
-              "target": "Package",
-              "version": "[3.0.0-preview4-27615-11, )",
-              "autoReferenced": true
-            }
-          },
           "imports": [
             "net461"
           ],
           "assetTargetFallback": true,
           "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.WindowsDesktop.App.Ref",
+              "version": "[3.0.0-preview5-27626-15, 3.0.0-preview5-27626-15]"
+            }
+          ],
           "frameworkReferences": [
             "Microsoft.NETCore.App"
           ]
