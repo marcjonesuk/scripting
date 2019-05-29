@@ -1,11 +1,9 @@
 
 
-var x = new()
+x = new()
 x.person = new()
 x.person.name = 'marc'
 x.person.age = 37
 
-js = json(x)
-var y = new (js)
-inc(y.person.age)
-json(y)
+v = 'test'; f = { v = 'hello, world' }; f(); v
+

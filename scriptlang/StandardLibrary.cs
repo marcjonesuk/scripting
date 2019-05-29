@@ -9,7 +9,13 @@ namespace scriptlang
     public class State
     {
         public static Stack<object[]> Args = new Stack<object[]>();
-        public static Dictionary<string, object> Functions = new Dictionary<string, object>();
+        public static int StackDepth = 0;
+        //public static Dictionary<string, object> Functions = new Dictionary<string, object>();
+
+        public static List<Dictionary<string, object>> Functions = new List<Dictionary<string, object>>();
+
+        public static Dictionary<string, object> Global = new Dictionary<string, object>();
+
         public static HashSet<string> Const = new HashSet<string>();
 
         static void AssertArgCount(object[] args, int count, string functionName)
@@ -20,22 +26,31 @@ namespace scriptlang
             }
         }
 
+        public static (object, bool) Resolve(string name)
+        {
+            for (var stack = Functions.Count - 1; stack >= 0; stack--)
+            {
+                if (Functions[stack].ContainsKey(name))
+                    return (Functions[stack][name], true);
+            }
+            return (null, false);
+        }
+
         public static object GetValue(List<string> parts)
         {
+            var (result, found) = Resolve(parts[0]);
+            if (!found)
+                throw new RuntimeException($"Unknown symbol: {parts[0]}");
             if (parts.Count == 1)
-            {
-                if (!State.Functions.ContainsKey(parts[0]))
-                    throw new RuntimeException($"Unknown symbol: {parts[0]}");
-				return State.Functions[parts[0]];
-            }
+                return result;
 
- 			var current = State.Functions[parts[0]];
+            var current = Resolve(parts[0]).Item1;
             for (var i = 1; i < parts.Count; i++)
             {
-				var p = parts[i];
+                var p = parts[i];
                 current = GetObjectProperty(current, p);
             }
-			return current;
+            return current;
         }
 
         private static object GetObjectProperty(object root, string property)
@@ -62,14 +77,14 @@ namespace scriptlang
         public static object SetValue(List<string> parts, ScriptFunction value)
         {
             if (parts.Count == 1)
-                return ((CustomFunction)State.Functions["set"]).Invoke(new object[] { parts[0], value });
+                return ((CustomFunction)Global["set"]).Invoke(new object[] { parts[0], value });
 
-            if (!State.Functions.ContainsKey(parts[0]))
+			var (current, found) = Resolve(parts[0]);
+            if (!found)
             {
                 throw new RuntimeException($"symbol {parts[0]} has not been assigned");
             }
-
-            var current = State.Functions[parts[0]];
+            
             for (var i = 1; i < parts.Count; i++)
             {
                 var p = parts[i];
@@ -82,8 +97,10 @@ namespace scriptlang
 
         static State()
         {
+            Functions.Add(Global);
+
             Const.Add("var");
-            Functions["var"] = new CustomFunction(args =>
+            Global["var"] = new CustomFunction(args =>
             {
                 var func = args[0] as ScriptFunction;
 
@@ -95,16 +112,16 @@ namespace scriptlang
                 if (args.Length > 1)
                 {
                     var valueFunc = args[1] as ScriptFunction;
-                    Functions[variableName] = valueFunc.Invoke();
+                    Functions[StackDepth - 1][variableName] = valueFunc.Invoke();
                 }
                 else
                 {
-                    Functions[variableName] = null;
+                    Functions[StackDepth - 1][variableName] = null;
                 }
-                return Functions[variableName];
+                return Functions[StackDepth - 1][variableName];
             });
 
-            Functions["args"] = new CustomFunction(args =>
+            Global["args"] = new CustomFunction(args =>
             {
                 if (args.Length == 0)
                     return Args.Peek();
@@ -113,7 +130,7 @@ namespace scriptlang
                 return Args.Peek()[index];
             });
 
-            Functions["props"] = new CustomFunction(args =>
+            Global["props"] = new CustomFunction(args =>
             {
                 if (args[0] is IDictionary<string, object> d)
                 {
@@ -123,7 +140,7 @@ namespace scriptlang
             });
 
             Const.Add("const");
-            Functions["const"] = new CustomFunction(args =>
+            Global["const"] = new CustomFunction(args =>
             {
                 var func = args[0] as ScriptFunction;
 
@@ -135,18 +152,18 @@ namespace scriptlang
                 if (args.Length > 1)
                 {
                     var valueFunc = args[1] as ScriptFunction;
-                    Functions[variableName] = valueFunc.Invoke();
+                    Global[variableName] = valueFunc.Invoke();
                     Const.Add(variableName);
                 }
                 else
                 {
                     throw new RuntimeException($"const ({variableName}) must be declared with a value");
                 }
-                return Functions[variableName];
+                return Global[variableName];
             });
 
             Const.Add("set");
-            Functions["set"] = new CustomFunction(args =>
+            Global["set"] = new CustomFunction(args =>
             {
                 string varName;
                 if (args[0] is string s)
@@ -175,47 +192,56 @@ namespace scriptlang
                     newValue = new CustomFunction(lambdaArgs =>
                     {
                         Args.Push(lambdaArgs);
+                        StackDepth++;
+						Functions.Add(new Dictionary<string, object>());
                         var result = sf.Invoke();
                         Args.Pop();
+						Functions.RemoveAt(StackDepth);
+                        StackDepth--;
                         return result;
                     });
                 }
 
-                Functions[varName] = newValue;
+                Functions[StackDepth][varName] = newValue;
                 return newValue;
             });
 
             Const.Add("throw");
-            Functions["throw"] = new CustomFunction(args =>
+            Global["throw"] = new CustomFunction(args =>
             {
                 throw new Exception(args[0].ToString());
             });
 
-            Functions["write"] = new CustomFunction(args =>
+            Global["write"] = new CustomFunction(args =>
             {
                 Console.WriteLine(args[0].ToString());
                 return null;
             });
-            Functions["new"] = new CustomFunction(args =>
+            Global["new"] = new CustomFunction(args =>
             {
-				if(args.Length == 0) 
-					return new ExpandoObject();
+                if (args.Length == 0)
+                    return new ExpandoObject();
 
-				switch(args[0]) {
-					case string s:
-						// todo: handle lists?
-						return JsonConvert.DeserializeObject<ExpandoObject>(s);
-				}
+                switch (args[0])
+                {
+                    case string s:
+                        // todo: optimise this
+                        var st = s.TrimStart();
+                        if (st[0] == '[')
+                            return JsonConvert.DeserializeObject<List<object>>(st);
+                        else
+                            return JsonConvert.DeserializeObject<ExpandoObject>(st);
+                }
 
-				throw new RuntimeException();
+                throw new RuntimeException();
             });
 
-            Functions["add"] = new CustomFunction(args =>
+            Global["add"] = new CustomFunction(args =>
             {
                 return (dynamic)args[0] + (dynamic)args[1];
             });
 
-            Functions["len"] = new CustomFunction(args =>
+            Global["len"] = new CustomFunction(args =>
             {
                 if (args[0] is string s)
                     return s.Length;
@@ -227,7 +253,7 @@ namespace scriptlang
                 throw new RuntimeException($"Cannot use len function on type {args[0].GetType()}");
             });
 
-            Functions["clear"] = new CustomFunction(args =>
+            Global["clear"] = new CustomFunction(args =>
             {
                 if (args[0] is IList l)
                 {
@@ -237,33 +263,36 @@ namespace scriptlang
                 throw new RuntimeException($"Cannot use len function on type {args[0].GetType()}");
             });
 
-            Functions["inc"] = new CustomFunction(args =>
+            Global["inc"] = new CustomFunction(args =>
             {
-                AssertArgCount(args, 1, "inc");
-                var s = args[0] as ScriptFunction;
-                dynamic value = s.Invoke();
-                value++;
-                if (s.SymbolName != null)
-                {
-                    Functions[s.SymbolName] = value;
-                }
-                return value;
+				// todo handle local state
+                // AssertArgCount(args, 1, "inc");
+                // var s = args[0] as ScriptFunction;
+                // dynamic value = s.Invoke();
+                // value++;
+                // if (s.SymbolName != null)
+                // {
+                //     Global[s.SymbolName] = value;
+                // }
+                //return value;
+				return null;
             });
 
-            Functions["dec"] = new CustomFunction(args =>
+            Global["dec"] = new CustomFunction(args =>
             {
-                AssertArgCount(args, 1, "inc");
-                var s = args[0] as ScriptFunction;
-                dynamic value = s.Invoke();
-                value--;
-                if (s.SymbolName != null)
-                {
-                    Functions[s.SymbolName] = value;
-                }
-                return value;
+                // AssertArgCount(args, 1, "inc");
+                // var s = args[0] as ScriptFunction;
+                // dynamic value = s.Invoke();
+                // value--;
+                // if (s.SymbolName != null)
+                // {
+                //     Global[s.SymbolName] = value;
+                // }
+                // return value;
+				return null;
             });
 
-            Functions["eq"] = new CustomFunction(args =>
+            Global["eq"] = new CustomFunction(args =>
             {
                 AssertArgCount(args, 2, "eq");
                 var arg1 = args[0];
@@ -283,7 +312,7 @@ namespace scriptlang
             });
 
             Const.Add("if");
-            Functions["if"] = new CustomFunction(args =>
+            Global["if"] = new CustomFunction(args =>
             {
                 if (Truthy(args[0]))
                 {
@@ -313,19 +342,19 @@ namespace scriptlang
                 }
             });
 
-			Functions["json"] = new CustomFunction(args =>
+            Global["json"] = new CustomFunction(args =>
             {
                 return JsonConvert.SerializeObject(args[0]);
             });
 
             Const.Add("not");
-            Functions["not"] = new CustomFunction(args =>
+            Global["not"] = new CustomFunction(args =>
             {
                 return !Truthy(args[0]);
             });
 
             Const.Add("try");
-            Functions["try"] = new CustomFunction(args =>
+            Global["try"] = new CustomFunction(args =>
             {
                 if (args.Length == 0)
                 {
@@ -347,8 +376,12 @@ namespace scriptlang
                         if (args[1] is ScriptFunction c)
                         {
                             Args.Push(new object[] { ex.Message });
+                            StackDepth++;
+							Functions.Add(new Dictionary<string, object>());
                             var result = c.Invoke();
                             Args.Pop();
+                            StackDepth--;
+							Functions.RemoveAt(StackDepth - 1);
                             return result;
                         }
                     }
@@ -357,13 +390,12 @@ namespace scriptlang
             });
 
             Const.Add("null");
-            Functions["null"] = null;
+            Global["null"] = null;
             Const.Add("true");
-            Functions["true"] = true;
+            Global["true"] = true;
             Const.Add("false");
-            Functions["false"] = false;
-
-            Array.Do(Functions);
+            Global["false"] = false;
+            Array.Do(Global);
         }
 
         static bool Truthy(object arg)

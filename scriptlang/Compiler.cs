@@ -373,7 +373,7 @@ namespace scriptlang
 					}
 				}
 
-				return ((CustomFunction)State.Functions[symbolName]).Invoke(args);
+				return ((CustomFunction)State.Global[symbolName]).Invoke(args);
 			}), !en.MoveNext());
 		}
 
