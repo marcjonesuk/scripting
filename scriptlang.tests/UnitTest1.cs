@@ -205,6 +205,12 @@ namespace scriptlang.tests
 			Test("v = 'test'; f = { v = 'hello, world' }; f(); v", "test");
         }
 
+ 		[TestMethod]
+        public void Scope()
+        {     
+			Test("v = 'test'; f = { v = 'hello, world' }; f(); v", "test");
+		}
+
         [TestMethod]
         public void Indexers()
         {           
