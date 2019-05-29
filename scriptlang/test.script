@@ -1,4 +1,10 @@
+z = [1,2]
 
+y = { 
+    x = args(0)
+    write(x)
+};
 
-x = new(); x.y = ''; len(props(x))
+z = y(1)
+
 

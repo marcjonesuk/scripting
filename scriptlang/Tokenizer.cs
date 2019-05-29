@@ -127,6 +127,14 @@ namespace scriptlang
 					case '{':
 					case '}':
 					case '=':
+						if (retVal == null)
+						{
+							return ((char)reader.Read()).ToString();
+						}
+						else
+						{
+							return retVal;
+						}
 					case '.':
 						if (retVal != null && NumberParser.IsNumeric(retVal))
 						{
