@@ -279,7 +279,15 @@ namespace scriptlang
 
 			// Discarding "(" token and checking if we're at EOF.
 			var eof = !en.MoveNext();
+			var parts = new List<string>();
+			parts.Add(symbolName);
 
+			while (!eof && en.Current.ToString() == ".")
+			{
+				eof = !en.MoveNext();
+				parts.Add(en.Current);
+				eof = !en.MoveNext();
+			}
 			// Checking if this is a function invocation.
 			if (!eof && en.Current.ToString() == "(")
 			{
@@ -299,8 +307,7 @@ namespace scriptlang
 				var (value, neof) = CompileStatement(en);
 				return (new ScriptFunction(() =>
 				{
-					// TODO can cache this one
-					return ((CustomFunction)State.Functions["set"]).Invoke(new object[] { symbolName, value });
+					return State.SetValue(parts, value);
 				})
 				{ SymbolName = symbolName }, neof);
 			}
@@ -316,9 +323,7 @@ namespace scriptlang
 				}
 				return (new ScriptFunction(() =>
 				{
-					if (!State.Functions.ContainsKey(symbolName))
-						throw new RuntimeException($"Unknown symbol: {symbolName}");
-					return State.Functions[symbolName];
+					return State.GetValue(parts);
 				})
 				{ SymbolName = symbolName }, eof);
 			}

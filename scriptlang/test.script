@@ -1,10 +1,7 @@
-z = [1,2]
 
-y = { 
-    x = args(0)
-    write(x)
-};
 
-z = y(1)
-
+var x = new()
+x.person = new()
+x.person.name = 'marc'
+x.person.age = 37
 

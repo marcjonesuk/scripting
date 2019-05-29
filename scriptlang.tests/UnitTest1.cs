@@ -170,6 +170,15 @@ namespace scriptlang.tests
 			Test("x = { add(args(0), 20) }; y = { args(0)(10) }; y(x)", 30.0);
 			Test("y = { args(0)(10) }; y({ add(args(0), 20) })", 30.0); // anonymous invocation gets args
 		}
+		
+		[TestMethod]
+		public void Objects()
+		{
+			//Test("x = new(); x.y = 'hello, world'; len(props(x));", 1);
+			Test("x = new(); x.y = 'hello, world'; x.y;", "hello, world");
+			Test("x = new(); x.y = 'hello, world'; x.z;", null);
+			//TestThrows<RuntimeException>("x = new(); x.y.z = 'hello, world'");
+		}
 
 		[TestMethod]
 		public void Todo()

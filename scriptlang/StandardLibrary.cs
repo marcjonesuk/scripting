@@ -5,368 +5,367 @@ using System.Dynamic;
 
 namespace scriptlang
 {
+    public class State
+    {
+        public static Stack<object[]> Args = new Stack<object[]>();
+        public static Dictionary<string, object> Functions = new Dictionary<string, object>();
+        public static HashSet<string> Const = new HashSet<string>();
 
-	public class Array
-	{
-		public static void Do(Dictionary<string, object> functions)
-		{
-			functions["list.splice"] = new CustomFunction(args =>
-			{
-				if (args[0] is IList l && args.Length > 1)
-				{
-					return null;
-				}
-				throw new RuntimeException($"Cannot use len function on type {args[0].GetType()}");
-			});
-			functions["list.length"] = functions["len"];
-			functions["list.clear"] = functions["clear"];
-			functions["list.new"] = new CustomFunction(args =>
-			{
-				var list = new List<object>();
-				for (var i = 0; i < args.Length; i++)
-				{
-					list.Add(args[i]);
-				}
-				return list;
-			});
+        static void AssertArgCount(object[] args, int count, string functionName)
+        {
+            if (args.Length != count)
+            {
+                throw new RuntimeException($"{functionName} should be invoked with {count} arg(s)");
+            }
+        }
 
+        public static object GetValue(List<string> parts)
+        {
+            if (parts.Count == 1)
+            {
+                if (!State.Functions.ContainsKey(parts[0]))
+                    throw new RuntimeException($"Unknown symbol: {parts[0]}");
+				return State.Functions[parts[0]];
+            }
 
-			functions["list.indexOf"] = new CustomFunction(args =>
-			{
-				if (args[0] is IList l)
-				{
-					var f = args.Length > 1 ? args[1] : null;
-					return l.IndexOf(f);
-				}
-				throw new RuntimeException("The first argument to list.indexof(..) should be a list object.");
-			});
-			functions["list.push"] = new CustomFunction(args =>
-			{
-				if (args[0] is IList l)
-				{
-					for (var i = 1; i < args.Length; i++)
-					{
-						l.Add(args[i]);
-					}
-				}
-				else
-				{
-					throw new RuntimeException("The first argument to list.add(..) should be a list.");
-				}
-				return new List<object>();
-			});
-			functions["list.pop"] = new CustomFunction(args =>
-			{
+ 			var current = State.Functions[parts[0]];
+            for (var i = 1; i < parts.Count; i++)
+            {
+				var p = parts[i];
+                current = GetObjectProperty(current, p);
+            }
+			return current;
+        }
 
-				return new List<object>();
-			});
-		}
-	}
+        private static object GetObjectProperty(object root, string property)
+        {
+            if (root is IDictionary<string, object> dict)
+            {
+                if (!dict.ContainsKey(property))
+                    throw new RuntimeException("Member does not exist");
+                return dict[property];
+            }
+            throw new RuntimeException("TODO: cant get property");
+        }
 
-	public class State
-	{
-		public static Stack<object[]> Args = new Stack<object[]>();
-		public static Dictionary<string, object> Functions = new Dictionary<string, object>();
-		public static HashSet<string> Const = new HashSet<string>();
+        private static object SetObjectProperty(object obj, string property, object value)
+        {
+            if (obj is IDictionary<string, object> dict)
+            {
+                dict[property] = value;
+                return value;
+            }
+            throw new RuntimeException("TODO: cant get property");
+        }
 
-		static void AssertArgCount(object[] args, int count, string functionName)
-		{
-			if (args.Length != count)
-			{
-				throw new RuntimeException($"{functionName} should be invoked with {count} arg(s)");
-			}
-		}
+        public static object SetValue(List<string> parts, ScriptFunction value)
+        {
+            if (parts.Count == 1)
+                return ((CustomFunction)State.Functions["set"]).Invoke(new object[] { parts[0], value });
 
-		static void Set(string symbol, CustomFunction customFunction) {
+            if (!State.Functions.ContainsKey(parts[0]))
+            {
+                throw new RuntimeException($"symbol {parts[0]} has not been assigned");
+            }
 
-		}
+            var current = State.Functions[parts[0]];
+            for (var i = 1; i < parts.Count; i++)
+            {
+                var p = parts[i];
+                if (i == parts.Count - 1)
+                    return SetObjectProperty(current, p, value.Invoke());
+                current = GetObjectProperty(current, p);
+            }
+            throw new RuntimeException("SetValue failed");
+        }
 
-		static State()
-		{
-			Const.Add("var");
-			Functions["var"] = new CustomFunction(args =>
-			{
-				var func = args[0] as ScriptFunction;
+        static State()
+        {
+            Const.Add("var");
+            Functions["var"] = new CustomFunction(args =>
+            {
+                var func = args[0] as ScriptFunction;
 
-				if (func == null)
-					throw new RuntimeException();
+                if (func == null)
+                    throw new RuntimeException();
 
-				var variableName = func.SymbolName;
+                var variableName = func.SymbolName;
 
-				if (args.Length > 1)
-				{
-					var valueFunc = args[1] as ScriptFunction;
-					Functions[variableName] = valueFunc.Invoke();
-				}
-				else
-				{
-					Functions[variableName] = null;
-				}
-				return Functions[variableName];
-			});
+                if (args.Length > 1)
+                {
+                    var valueFunc = args[1] as ScriptFunction;
+                    Functions[variableName] = valueFunc.Invoke();
+                }
+                else
+                {
+                    Functions[variableName] = null;
+                }
+                return Functions[variableName];
+            });
 
-			Functions["args"] = new CustomFunction(args => 
-			{
-				if (args.Length == 0) 
-					return Args.Peek();
-					
-				var index = (int)Convert.ChangeType(args[0], typeof(int));
-				return Args.Peek()[index];
-			});
+            Functions["args"] = new CustomFunction(args =>
+            {
+                if (args.Length == 0)
+                    return Args.Peek();
 
-			Functions["props"] = new CustomFunction(args => 
-			{
-				if (args[0] is IDictionary<string, object> d) {
-					return new List<string>(d.Keys);
-				}
-				throw new RuntimeException("props: unable to return props");
-			});
+                var index = (int)Convert.ChangeType(args[0], typeof(int));
+                return Args.Peek()[index];
+            });
 
-			Const.Add("const");
-			Functions["const"] = new CustomFunction(args =>
-			{
-				var func = args[0] as ScriptFunction;
+            Functions["props"] = new CustomFunction(args =>
+            {
+                if (args[0] is IDictionary<string, object> d)
+                {
+                    return new List<string>(d.Keys);
+                }
+                throw new RuntimeException("props: unable to return props");
+            });
 
-				if (func == null)
-					throw new RuntimeException();
+            Const.Add("const");
+            Functions["const"] = new CustomFunction(args =>
+            {
+                var func = args[0] as ScriptFunction;
 
-				var variableName = func.SymbolName;
+                if (func == null)
+                    throw new RuntimeException();
 
-				if (args.Length > 1)
-				{
-					var valueFunc = args[1] as ScriptFunction;
-					Functions[variableName] = valueFunc.Invoke();
-					Const.Add(variableName);
-				}
-				else
-				{
-					throw new RuntimeException($"const ({variableName}) must be declared with a value");
-				}
-				return Functions[variableName];
-			});
+                var variableName = func.SymbolName;
 
-			Const.Add("set");
-			Functions["set"] = new CustomFunction(args =>
-			{
-				string varName;
-				if (args[0] is string s)
-				{
-					varName = s;
-				}
-				else
-				{
-					var func = args[0] as ScriptFunction;
-					if (func == null)
-						throw new RuntimeException();
-					if (string.IsNullOrEmpty(func.SymbolName))
-					{
-						throw new RuntimeException("The first argument of the set function should be a valid symbol");
-					}
-					varName = func.SymbolName;
-				}
+                if (args.Length > 1)
+                {
+                    var valueFunc = args[1] as ScriptFunction;
+                    Functions[variableName] = valueFunc.Invoke();
+                    Const.Add(variableName);
+                }
+                else
+                {
+                    throw new RuntimeException($"const ({variableName}) must be declared with a value");
+                }
+                return Functions[variableName];
+            });
 
-				if (Const.Contains(varName))
-				{
-					throw new RuntimeException($"Cannot assign to const variable {varName}");
-				}
-				var newValue = ((ScriptFunction)args[1]).Invoke();
-				if (newValue is ScriptFunction sf)
-				{
-					newValue = new CustomFunction(lambdaArgs => 
-					{ 
-						Args.Push(lambdaArgs);
-						var result = sf.Invoke();
-						Args.Pop();
-						return result;
-					});
-				}
+            Const.Add("set");
+            Functions["set"] = new CustomFunction(args =>
+            {
+                string varName;
+                if (args[0] is string s)
+                {
+                    varName = s;
+                }
+                else
+                {
+                    var func = args[0] as ScriptFunction;
+                    if (func == null)
+                        throw new RuntimeException();
+                    if (string.IsNullOrEmpty(func.SymbolName))
+                    {
+                        throw new RuntimeException("The first argument of the set function should be a valid symbol");
+                    }
+                    varName = func.SymbolName;
+                }
 
-				Functions[varName] = newValue;
-				return newValue;
-			});
+                if (Const.Contains(varName))
+                {
+                    throw new RuntimeException($"Cannot assign to const variable {varName}");
+                }
+                var newValue = ((ScriptFunction)args[1]).Invoke();
+                if (newValue is ScriptFunction sf)
+                {
+                    newValue = new CustomFunction(lambdaArgs =>
+                    {
+                        Args.Push(lambdaArgs);
+                        var result = sf.Invoke();
+                        Args.Pop();
+                        return result;
+                    });
+                }
 
-			Const.Add("throw");
-			Functions["throw"] = new CustomFunction(args =>
-			{
-				throw new Exception(args[0].ToString());
-			});
+                Functions[varName] = newValue;
+                return newValue;
+            });
 
-			Functions["write"] = new CustomFunction(args =>
-			{
-				Console.WriteLine(args[0].ToString());
-				return null;
-			});
-			Functions["new"] = new CustomFunction(args =>
-			{
-				return new ExpandoObject();
-			});
+            Const.Add("throw");
+            Functions["throw"] = new CustomFunction(args =>
+            {
+                throw new Exception(args[0].ToString());
+            });
 
-			Functions["add"] = new CustomFunction(args =>
-			{
-				return (dynamic)args[0] + (dynamic)args[1];
-			});
+            Functions["write"] = new CustomFunction(args =>
+            {
+                Console.WriteLine(args[0].ToString());
+                return null;
+            });
+            Functions["new"] = new CustomFunction(args =>
+            {
+                return new ExpandoObject();
+            });
 
-			Functions["len"] = new CustomFunction(args =>
-			{
-				if (args[0] is string s)
-					return s.Length;
-				if (args[0] is IList l)
-					return l.Count;
-				if (args[0] is ICollection c)
-					return c.Count;
+            Functions["add"] = new CustomFunction(args =>
+            {
+                return (dynamic)args[0] + (dynamic)args[1];
+            });
 
-				throw new RuntimeException($"Cannot use len function on type {args[0].GetType()}");
-			});
+            Functions["len"] = new CustomFunction(args =>
+            {
+                if (args[0] is string s)
+                    return s.Length;
+                if (args[0] is IList l)
+                    return l.Count;
+                if (args[0] is ICollection c)
+                    return c.Count;
 
-			Functions["clear"] = new CustomFunction(args =>
-			{
-				if (args[0] is IList l)
-				{
-					l.Clear();
-					return null;
-				}
-				throw new RuntimeException($"Cannot use len function on type {args[0].GetType()}");
-			});
+                throw new RuntimeException($"Cannot use len function on type {args[0].GetType()}");
+            });
 
-			Functions["inc"] = new CustomFunction(args =>
-			{
-				AssertArgCount(args, 1, "inc");
-				var s = args[0] as ScriptFunction;
-				dynamic value = s.Invoke();
-				value++;
-				if (s.SymbolName != null)
-				{
-					Functions[s.SymbolName] = value;
-				}
-				return value;
-			});
+            Functions["clear"] = new CustomFunction(args =>
+            {
+                if (args[0] is IList l)
+                {
+                    l.Clear();
+                    return null;
+                }
+                throw new RuntimeException($"Cannot use len function on type {args[0].GetType()}");
+            });
 
-			Functions["dec"] = new CustomFunction(args =>
-			{
-				AssertArgCount(args, 1, "inc");
-				var s = args[0] as ScriptFunction;
-				dynamic value = s.Invoke();
-				value--;
-				if (s.SymbolName != null)
-				{
-					Functions[s.SymbolName] = value;
-				}
-				return value;
-			});
+            Functions["inc"] = new CustomFunction(args =>
+            {
+                AssertArgCount(args, 1, "inc");
+                var s = args[0] as ScriptFunction;
+                dynamic value = s.Invoke();
+                value++;
+                if (s.SymbolName != null)
+                {
+                    Functions[s.SymbolName] = value;
+                }
+                return value;
+            });
 
-			Functions["eq"] = new CustomFunction(args =>
-			{
-				AssertArgCount(args, 2, "eq");
-				var arg1 = args[0];
+            Functions["dec"] = new CustomFunction(args =>
+            {
+                AssertArgCount(args, 1, "inc");
+                var s = args[0] as ScriptFunction;
+                dynamic value = s.Invoke();
+                value--;
+                if (s.SymbolName != null)
+                {
+                    Functions[s.SymbolName] = value;
+                }
+                return value;
+            });
 
-				// Comparing all other objects to the first.
-				for (var i = 1; i < args.Length; i++)
-				{
-					var ix = args[i];
-					if (arg1 == null && ix != null || arg1 != null && ix == null)
-						return false;
-					if (arg1 != null && !arg1.Equals(ix))
-						return false;
-				}
+            Functions["eq"] = new CustomFunction(args =>
+            {
+                AssertArgCount(args, 2, "eq");
+                var arg1 = args[0];
 
-				// Equality!
-				return (object)true;
-			});
+                // Comparing all other objects to the first.
+                for (var i = 1; i < args.Length; i++)
+                {
+                    var ix = args[i];
+                    if (arg1 == null && ix != null || arg1 != null && ix == null)
+                        return false;
+                    if (arg1 != null && !arg1.Equals(ix))
+                        return false;
+                }
 
-			Const.Add("if");
-			Functions["if"] = new CustomFunction(args =>
-			{
-				if (Truthy(args[0]))
-				{
-					if (args[1] is ScriptFunction s)
-					{
-						return s.Invoke();
-					}
-					else
-					{
-						return args[1];
-					}
-				}
-				else
-				{
-					if (args.Length > 2)
-					{
-						if (args[2] is ScriptFunction s)
-						{
-							return s.Invoke();
-						}
-						else
-						{
-							return args[2];
-						}
-					}
-					return null;
-				}
-			});
+                // Equality!
+                return (object)true;
+            });
 
-			Const.Add("not");
-			Functions["not"] = new CustomFunction(args =>
-			{
-				return !Truthy(args[0]);
-			});
+            Const.Add("if");
+            Functions["if"] = new CustomFunction(args =>
+            {
+                if (Truthy(args[0]))
+                {
+                    if (args[1] is ScriptFunction s)
+                    {
+                        return s.Invoke();
+                    }
+                    else
+                    {
+                        return args[1];
+                    }
+                }
+                else
+                {
+                    if (args.Length > 2)
+                    {
+                        if (args[2] is ScriptFunction s)
+                        {
+                            return s.Invoke();
+                        }
+                        else
+                        {
+                            return args[2];
+                        }
+                    }
+                    return null;
+                }
+            });
 
-			Const.Add("try");
-			Functions["try"] = new CustomFunction(args =>
-			{
-				if (args.Length == 0)
-				{
-					throw new RuntimeException("try function does not have any try block");
-				}
+            Const.Add("not");
+            Functions["not"] = new CustomFunction(args =>
+            {
+                return !Truthy(args[0]);
+            });
 
-				try
-				{
-					if (args[0] is ScriptFunction t)
-					{
-						return t.Invoke();
-					}
-					return null;
-				}
-				catch(Exception ex)
-				{
-					if (args.Length > 1)
-					{
-						if (args[1] is ScriptFunction c)
-						{
-							Args.Push(new object[] { ex.Message });
-							var result = c.Invoke();
-							Args.Pop();
-							return result;
-						}
-					}
-					return ex;
-				}
-			});
+            Const.Add("try");
+            Functions["try"] = new CustomFunction(args =>
+            {
+                if (args.Length == 0)
+                {
+                    throw new RuntimeException("try function does not have any try block");
+                }
 
-			Const.Add("null");
-			Functions["null"] = null;
-			Const.Add("true");
-			Functions["true"] = true;
-			Const.Add("false");
-			Functions["false"] = false;
+                try
+                {
+                    if (args[0] is ScriptFunction t)
+                    {
+                        return t.Invoke();
+                    }
+                    return null;
+                }
+                catch (Exception ex)
+                {
+                    if (args.Length > 1)
+                    {
+                        if (args[1] is ScriptFunction c)
+                        {
+                            Args.Push(new object[] { ex.Message });
+                            var result = c.Invoke();
+                            Args.Pop();
+                            return result;
+                        }
+                    }
+                    return ex;
+                }
+            });
 
-			Array.Do(Functions);
-		}
+            Const.Add("null");
+            Functions["null"] = null;
+            Const.Add("true");
+            Functions["true"] = true;
+            Const.Add("false");
+            Functions["false"] = false;
 
-		static bool Truthy(object arg)
-		{
-			if (arg is bool b)
-			{
-				return b;
-			}
-			if (arg == null)
-			{
-				return false;
-			}
-			if (arg is string s)
-			{
-				return s != string.Empty;
-			}
-			return true;
-		}
-	}
+            Array.Do(Functions);
+        }
+
+        static bool Truthy(object arg)
+        {
+            if (arg is bool b)
+            {
+                return b;
+            }
+            if (arg == null)
+            {
+                return false;
+            }
+            if (arg is string s)
+            {
+                return s != string.Empty;
+            }
+            return true;
+        }
+    }
 }
