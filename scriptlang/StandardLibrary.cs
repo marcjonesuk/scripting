@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Dynamic;
+using Newtonsoft.Json;
 
 namespace scriptlang
 {
@@ -197,7 +198,16 @@ namespace scriptlang
             });
             Functions["new"] = new CustomFunction(args =>
             {
-                return new ExpandoObject();
+				if(args.Length == 0) 
+					return new ExpandoObject();
+
+				switch(args[0]) {
+					case string s:
+						// todo: handle lists?
+						return JsonConvert.DeserializeObject<ExpandoObject>(s);
+				}
+
+				throw new RuntimeException();
             });
 
             Functions["add"] = new CustomFunction(args =>
@@ -301,6 +311,11 @@ namespace scriptlang
                     }
                     return null;
                 }
+            });
+
+			Functions["json"] = new CustomFunction(args =>
+            {
+                return JsonConvert.SerializeObject(args[0]);
             });
 
             Const.Add("not");
