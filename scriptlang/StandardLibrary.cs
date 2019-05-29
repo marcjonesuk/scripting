@@ -5,6 +5,7 @@ using System.Dynamic;
 
 namespace scriptlang
 {
+
 	public class Array
 	{
 		public static void Do(Dictionary<string, object> functions)
@@ -76,7 +77,7 @@ namespace scriptlang
 			}
 		}
 
-		static void Register(string name, CustomFunction customFunction) {
+		static void Set(string symbol, CustomFunction customFunction) {
 
 		}
 
@@ -163,6 +164,7 @@ namespace scriptlang
 					}
 					varName = func.SymbolName;
 				}
+
 				if (Const.Contains(varName))
 				{
 					throw new RuntimeException($"Cannot assign to const variable {varName}");

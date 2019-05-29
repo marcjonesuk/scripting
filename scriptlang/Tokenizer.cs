@@ -127,10 +127,15 @@ namespace scriptlang
 					case '{':
 					case '}':
 					case '=':
-
+					case '.':
+						if (retVal != null && NumberParser.IsNumeric(retVal))
+						{
+							retVal += '.';
+							reader.Read();
+							break;
+						}
 						if (retVal == null)
 						{
-
 							// This is our token.
 							return ((char)reader.Read()).ToString();
 
@@ -211,9 +216,9 @@ namespace scriptlang
                      */
 
 					default:
-
+						var c = (char)reader.Read();
 						// Eating next character, and appending to retVal.
-						retVal += (char)reader.Read();
+						retVal += c;
 						break;
 				}
 			}

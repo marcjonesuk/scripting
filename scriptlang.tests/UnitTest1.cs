@@ -35,10 +35,10 @@ namespace scriptlang.tests
 		[TestMethod]
 		public void Numbers()
 		{
-			Test("10", 10.0);
-			Test("-10", -10.0);
+			//Test("10", 10.0);
+			//Test("-10", -10.0);
 			Test("-10.9012", -10.9012);
-			Test("106223.23423443", 106223.23423443);
+			//Test("106223.23423443", 106223.23423443);
 		}
 
 		[TestMethod]
@@ -175,10 +175,13 @@ namespace scriptlang.tests
 		public void Todo()
 		{
 			// objects
-			Test("x = new(); x.y = 'hello, world'; len(props(x))", 1);
+			Test("x = new(); x.y = 'hello, world'; len(props(x));", 1);
 
 			// integers 
 			// Test("1", 1);
+
+			// string interpolation
+			// Test("x = 'hello'; '{x}, world'", "hello, world");
 		}
 
 		[TestMethod]
