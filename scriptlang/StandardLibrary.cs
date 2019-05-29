@@ -89,7 +89,7 @@ namespace scriptlang
             {
                 var p = parts[i];
                 if (i == parts.Count - 1)
-                    return SetObjectProperty(current, p, value.Invoke());
+                    return SetObjectProperty(current, p, value.Invoke(null));
                 current = GetObjectProperty(current, p);
             }
             throw new RuntimeException("SetValue failed");
@@ -102,6 +102,7 @@ namespace scriptlang
             Const.Add("var");
             Global["var"] = new CustomFunction(args =>
             {
+				return null;
                 var func = args[0] as ScriptFunction;
 
                 if (func == null)
@@ -112,7 +113,7 @@ namespace scriptlang
                 if (args.Length > 1)
                 {
                     var valueFunc = args[1] as ScriptFunction;
-                    Functions[StackDepth - 1][variableName] = valueFunc.Invoke();
+                    Functions[StackDepth - 1][variableName] = valueFunc.Invoke(null);
                 }
                 else
                 {
@@ -152,7 +153,7 @@ namespace scriptlang
                 if (args.Length > 1)
                 {
                     var valueFunc = args[1] as ScriptFunction;
-                    Global[variableName] = valueFunc.Invoke();
+                    Global[variableName] = valueFunc.Invoke(null);
                     Const.Add(variableName);
                 }
                 else
@@ -186,7 +187,7 @@ namespace scriptlang
                 {
                     throw new RuntimeException($"Cannot assign to const variable {varName}");
                 }
-                var newValue = ((ScriptFunction)args[1]).Invoke();
+                var newValue = ((ScriptFunction)args[1]).Invoke(null);
                 if (newValue is ScriptFunction sf)
                 {
                     newValue = new CustomFunction(lambdaArgs =>
@@ -194,7 +195,7 @@ namespace scriptlang
                         Args.Push(lambdaArgs);
                         StackDepth++;
 						Functions.Add(new Dictionary<string, object>());
-                        var result = sf.Invoke();
+                        var result = sf.Invoke(lambdaArgs);
                         Args.Pop();
 						Functions.RemoveAt(StackDepth);
                         StackDepth--;
@@ -318,7 +319,7 @@ namespace scriptlang
                 {
                     if (args[1] is ScriptFunction s)
                     {
-                        return s.Invoke();
+                        return s.Invoke(null);
                     }
                     else
                     {
@@ -331,7 +332,7 @@ namespace scriptlang
                     {
                         if (args[2] is ScriptFunction s)
                         {
-                            return s.Invoke();
+                            return s.Invoke(null);
                         }
                         else
                         {
@@ -365,7 +366,7 @@ namespace scriptlang
                 {
                     if (args[0] is ScriptFunction t)
                     {
-                        return t.Invoke();
+                        return t.Invoke(null);
                     }
                     return null;
                 }
@@ -378,10 +379,10 @@ namespace scriptlang
                             Args.Push(new object[] { ex.Message });
                             StackDepth++;
 							Functions.Add(new Dictionary<string, object>());
-                            var result = c.Invoke();
+                            var result = c.Invoke(null);
                             Args.Pop();
                             StackDepth--;
-							Functions.RemoveAt(StackDepth - 1);
+							Functions.RemoveAt(StackDepth);
                             return result;
                         }
                     }

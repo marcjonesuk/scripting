@@ -1,14 +1,8 @@
 
-var x = new()
-x.person = new()
-x.person.name = 'marc'
-x.person.age = 37
+y = { args(0)(12) }; 
 
-
-
-f = func(say) {
-	write(say)
-}
-
-f('hello maisie')
+y({
+	write('sfsdf')
+	add(30, 10)	
+})
 

@@ -44,10 +44,7 @@ namespace scriptlang
 			var stringConstant = en.Current.ToString();
 			en.MoveNext();
 
-			return (new ScriptFunction(() =>
-			{
-				return stringConstant;
-			}), !en.MoveNext());
+			return (new ScriptFunction(_ => stringConstant), !en.MoveNext());
 		}
 
 		public static (ScriptFunction, bool) CompileNumber(IEnumerator<Token> en)
@@ -58,10 +55,7 @@ namespace scriptlang
 
 			var result = (object)dblResult;
 
-			return (new ScriptFunction(() =>
-			{
-				return result;
-			}), !en.MoveNext());
+			return (new ScriptFunction(_ => result), !en.MoveNext());
 		}
 
 		public static Func<object> Compile(IEnumerable<Token> tokens)
@@ -73,7 +67,7 @@ namespace scriptlang
 				object result = null;
 				foreach (var ix in functions)
 				{
-					result = ix.Invoke();
+					result = ix.Invoke(null);
 				}
 				return result;
 			};
@@ -115,20 +109,17 @@ namespace scriptlang
              * Creating a function that evaluates every function sequentially, and
              * returns the result of the last function evaluation to the caller.
              */
-			var function = new ScriptFunction(() =>
+			var function = new ScriptFunction(_ =>
 			{
 				object result = null;
 				foreach (var ix in functions)
 				{
-					result = ix.Invoke();
+					result = ix.Invoke(null);
 				}
 				return result;
 			});
 
-			var lazyFunction = new ScriptFunction(() =>
-			{
-				return function;
-			});
+			var lazyFunction = new ScriptFunction(_ => function);
 			return (lazyFunction, eof || !en.MoveNext());
 		}
 
@@ -191,12 +182,12 @@ namespace scriptlang
 				if (!en.MoveNext())
 					throw new CompilerException("Unexpected EOF while parsing list.");
 			}
-			return (new ScriptFunction(() =>
+			return (new ScriptFunction(_ =>
 			{
 				var list = new List<object>();
 				foreach (var ix in items)
 				{
-					list.Add(ix.Invoke());
+					list.Add(ix.Invoke(null));
 				}
 				return list;
 			}), !en.MoveNext());
@@ -221,23 +212,23 @@ namespace scriptlang
 					break; // And we are done parsing arguments.
 			}
 
-			return (new ScriptFunction(() =>
+			return (new ScriptFunction(_ =>
 			{
 				var args = new object[arguments.Count];
 				for (var a = 0; a < arguments.Count; a++)
 				{
-					var value = arguments[a].Invoke();
+					var value = arguments[a].Invoke(null);
 					args[a] = value;
 				}
 				
-				var result = sf.Invoke();
+				var result = sf.Invoke(null);
 				var s = result as CustomFunction;
 				if (s == null) {
 					if (result is ScriptFunction c) {
 						State.Args.Push(args);
                         State.StackDepth++;
 						State.Functions.Add(new Dictionary<string, object>());
-                        var res = sf.Invoke();
+                        var res = c.Invoke(args);
                         State.Args.Pop();
 						State.Functions.RemoveAt(State.StackDepth);
                         State.StackDepth--;
@@ -287,7 +278,7 @@ namespace scriptlang
 				// Variable assignment
 				en.MoveNext();
 				var (value, neof) = CompileStatement(en);
-				return (new ScriptFunction(() =>
+				return (new ScriptFunction(_ =>
 				{
 					return State.SetValue(parts, value);
 				})
@@ -303,7 +294,7 @@ namespace scriptlang
 				{
 					throw new CompilerException("if function does not have any arguments. Example: if({ ... }, /* else */ { ... })");
 				}
-				return (new ScriptFunction(() =>
+				return (new ScriptFunction(_ =>
 				{
 					return State.GetValue(parts);
 				})
@@ -339,14 +330,14 @@ namespace scriptlang
 					throw new CompilerException("Unexpected EOF while parsing arguments to function invocation.");
 			}
 
-			return (new ScriptFunction(() =>
+			return (new ScriptFunction(_ =>
 			{
 				var args = new object[arguments.Count];
 				for (var a = 0; a < arguments.Count; a++)
 				{
 					if (symbolName != "var" && symbolName != "const" && symbolName != "set" && symbolName != "inc" && symbolName != "dec")
 					{
-						var value = arguments[a].Invoke();
+						var value = arguments[a].Invoke(null);
 						args[a] = value;
 					}
 					else
@@ -354,8 +345,11 @@ namespace scriptlang
 						args[a] = arguments[a];
 					}
 				}
-
-				return ((CustomFunction)State.Global[symbolName]).Invoke(args);
+				var (func, found) = State.Resolve(symbolName);
+				if (!found)
+					throw new RuntimeException($"Cannot resolve symbol {symbolName}");
+				
+				return ((CustomFunction)func).Invoke(args);
 			}), !en.MoveNext());
 		}
 
@@ -391,10 +385,7 @@ namespace scriptlang
 				// {
 				// 	return functor;
 				// }), tuple.Item2);
-				return (new ScriptFunction(() =>
-				{
-					return func;
-				}), neof);
+				return (new ScriptFunction(_ => func), neof);
 			}
 			else
 			{
@@ -403,10 +394,7 @@ namespace scriptlang
                  * When you use the '@' character with a symbol, this implies simply returning the
                  * symbol's name.
                  */
-				return (new ScriptFunction(() =>
-				{
-					return symbolName;
-				}), eof);
+				return (new ScriptFunction(_ => symbolName), eof);
 			}
 		}
 	}

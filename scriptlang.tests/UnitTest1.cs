@@ -68,10 +68,10 @@ namespace scriptlang.tests
         [TestMethod]
         public void Variables()
         {
-            Test("var(x); x", null);
-            Test("var(x, true); x", true);
-            Test("var(x, false); x", false);
-            Test("var(x, -100.0); x", -100.0);
+            Test("x = null; x", null);
+            Test("x = true; x", true);
+            Test("x = false; x", false);
+            Test("x = -100.0; x", -100.0);
         }
 
         // [TestMethod]
@@ -99,11 +99,11 @@ namespace scriptlang.tests
         [TestMethod]
         public void Add_Inc_Dec()
         {
-            Test("var(x, 10.5); inc(x)", 11.5);
-            Test("var(x, 10.5); inc(x)", 11.5);
-            Test("var(x, -100.5); inc(x); inc(x)", -98.5);
-            Test("var(x, 10.5); dec(x)", 9.5);
-            Test("var(x, -100.5); dec(x); dec(x)", -102.5);
+            // Test("var(x, 10.5); inc(x)", 11.5);
+            // Test("var(x, 10.5); inc(x)", 11.5);
+            // Test("var(x, -100.5); inc(x); inc(x)", -98.5);
+            // Test("var(x, 10.5); dec(x)", 9.5);
+            // Test("var(x, -100.5); dec(x); dec(x)", -102.5);
         }
 
         [TestMethod]
@@ -113,12 +113,12 @@ namespace scriptlang.tests
             Test("eq(null, true)", false);
             Test("eq(null, 'null')", false);
             Test("eq(null, '')", false);
-            Test("var(x); eq(null, x)", true);
+            Test("x = null; eq(null, x)", true);
             Test("eq(true, true)", true);
             Test("eq(false, false)", true);
             Test("eq(true, 1)", false);
-            Test("var(x, 'hello, world'); eq('hello, world', x)", true);
-            Test("var(x, 'hello, world'); eq('hello, world ', x)", false);
+            Test("x = 'hello, world'; eq('hello, world', x)", true);
+            Test("x = 'hello, world'; eq('hello, world ', x)", false);
             Test("eq(1.0, 1)", true);
         }
 
@@ -126,11 +126,11 @@ namespace scriptlang.tests
         public void If()
         {
             Test("x = false; if(true, { x = true }); x", true);
-            Test("var(x, false); if(false, { set(x, true) }); x", false);
+            Test("x = false; if(false, { set(x, true) }); x", false);
             Test("if(true, { 'ok' })", "ok");
             Test("if(eq(null, false), { 5 }, { 10 })", 10.0);
             Test("if('hello, world', 'ok', 'not ok')", "ok");
-            Test("var(x, if(false, 'not ok', 'ok')); x", "ok");
+            // Test("var(x, if(false, 'not ok', 'ok')); x", "ok");
             TestThrows<CompilerException>("if");
             TestThrows<CompilerException>("if { }");
             TestThrows<RuntimeException>("if = null");
@@ -151,7 +151,7 @@ namespace scriptlang.tests
         {
             Test("x = -101.2;", -101.2);
             Test("x = 5; x", 5.0);
-            //Test("if(true, { set(x, 10.1) }); x", 10.1);
+            Test("if(true, { x = 10.1 }); x", 10.1);
             Test("x = 10.1; x", 10.1);
             Test("if(true, { x = 10.2 }); x", 10.2);
             Test("y = { x = 10.2; true }; not(y())", false);
@@ -171,11 +171,11 @@ namespace scriptlang.tests
         [TestMethod]
         public void Lambda_expression()
         {
-            Test("y = { inc(args(0)) }; y(100)", 101.0);
+            //Test("y = { inc(args(0)) }; y(100)", 101.0);
             Test("y = { z = { add(args(0), args(1)) }; z(args(0), 20) }; y(10)", 30.0);
             Test("y = { z = { 10 } }; y()()", 10.0);
             Test("y = { z = { add(10, args(0)) } }; y()(10)", 20.0);
-            // Test("y = { a = new(); a.name = args(0); a }; y('bob')");
+            //Test("y = { a = new(); a.name = args(0); a }; y('bob')");
             Test("x = { add(args(0), 20) }; y = { args(0)(10) }; y(x)", 30.0);
             Test("y = { args(0)(10) }; y({ add(args(0), 20) })", 30.0); // anonymous invocation gets args
         }
@@ -185,8 +185,8 @@ namespace scriptlang.tests
         {
             //Test("x = new(); x.y = 'hello, world'; len(props(x));", 1);
             Test("x = new(); x.y = 'hello, world'; x.y;", "hello, world");
-            Test("x = new(); x.y = 'hello, world'; x.z;", null);
-            //TestThrows<RuntimeException>("x = new(); x.y.z = 'hello, world'");
+            TestThrows<RuntimeException>("x = new(); x.y = 'hello, world'; x.z;");
+            TestThrows<RuntimeException>("x = new(); x.y.z = 'hello, world'");
         }
 
         [TestMethod]
