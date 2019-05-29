@@ -209,6 +209,7 @@ namespace scriptlang.tests
         public void Scope()
         {     
 			Test("v = 'test'; f = { v = 'hello, world' }; f(); v", "test");
+			Test("v = 'test'; f = { v = 'hello, world' { v = 'yoyoyo' } }; y = f()(); v", "test");
 		}
 
         [TestMethod]

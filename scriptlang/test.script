@@ -5,5 +5,4 @@ x.person = new()
 x.person.name = 'marc'
 x.person.age = 37
 
-v = 'test'; f = { v = 'hello, world' }; f(); v
-
+v = 'test'; f = { v = 'hello, world' { v = 'yoyoyo' } }; y = f()(); v
