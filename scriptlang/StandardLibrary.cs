@@ -106,8 +106,19 @@ namespace scriptlang
 
 			Functions["args"] = new CustomFunction(args => 
 			{
+				if (args.Length == 0) 
+					return Args.Peek();
+					
 				var index = (int)Convert.ChangeType(args[0], typeof(int));
 				return Args.Peek()[index];
+			});
+
+			Functions["props"] = new CustomFunction(args => 
+			{
+				if (args[0] is IDictionary<string, object> d) {
+					return new List<string>(d.Keys);
+				}
+				throw new RuntimeException("props: unable to return props");
 			});
 
 			Const.Add("const");
@@ -199,6 +210,8 @@ namespace scriptlang
 					return s.Length;
 				if (args[0] is IList l)
 					return l.Count;
+				if (args[0] is ICollection c)
+					return c.Count;
 
 				throw new RuntimeException($"Cannot use len function on type {args[0].GetType()}");
 			});

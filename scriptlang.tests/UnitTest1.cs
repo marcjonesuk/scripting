@@ -167,6 +167,18 @@ namespace scriptlang.tests
 			Test("y = { z = { 10 } }; y()()", 10.0);
 			Test("y = { z = { add(10, args(0)) } }; y()(10)", 20.0);
 			// Test("y = { a = new(); a.name = args(0); a }; y('bob')");
+			Test("x = { add(args(0), 20) }; y = { args(0)(10) }; y(x)", 30.0);
+			Test("y = { args(0)(10) }; y({ add(args(0), 20) })", 30.0); // anonymous invocation gets args
+		}
+
+		[TestMethod]
+		public void Todo()
+		{
+			// objects
+			Test("x = new(); x.y = 'hello, world'; len(props(x))", 1);
+
+			// integers 
+			// Test("1", 1);
 		}
 
 		[TestMethod]

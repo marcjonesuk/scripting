@@ -1,20 +1,4 @@
 
 
-trythenlog = {
-	try({
-		args(0)('starting')
-		write('ok')
-	}, {
-		error = args(0)
-		write(add('error:', error))
-	})
-}
-
-trythenlog({
-	x = 10
-	write(args(0))
-	throw('fuck')
-})
-
-write(x)
+x = new(); x.y = ''; len(props(x))
 
