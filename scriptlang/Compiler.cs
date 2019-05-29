@@ -167,28 +167,6 @@ namespace scriptlang
 			return (functions, eof);
 		}
 
-		// static (ScriptFunction, bool) ApplyArguments(string symbolName, IEnumerator<Token> en)
-		// {
-
-
-		// 	return (new ScriptFunction(() =>
-		// 	{
-		// 		var args = new object[arguments.Count];
-		// 		for (var a = 0; a < arguments.Count; a++)
-		// 		{
-		// 			if (symbolName != "var" && symbolName != "set" && symbolName != "inc" && symbolName != "dec")
-		// 			{
-		// 				var value = arguments[a].Invoke();
-		// 				args[a] = value;
-		// 			}
-		// 			else
-		// 			{
-		// 				args[a] = arguments[a];
-		// 			}
-		// 		}
-
-		// 		return State.Functions[symbolName].Invoke(args);
-		// 	}), !en.MoveNext());
 
 		static (ScriptFunction, bool) CompileList(IEnumerator<Token> en)
 		{
@@ -257,9 +235,13 @@ namespace scriptlang
 				if (s == null) {
 					if (result is ScriptFunction c) {
 						State.Args.Push(args);
-						var res = c.Invoke();
-						State.Args.Pop();
-						return res;
+                        State.StackDepth++;
+						State.Functions.Add(new Dictionary<string, object>());
+                        var res = sf.Invoke();
+                        State.Args.Pop();
+						State.Functions.RemoveAt(State.StackDepth);
+                        State.StackDepth--;
+                        return res;
 					}
 					throw new RuntimeException("Unable to invoke result");
 				}

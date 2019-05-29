@@ -1,8 +1,14 @@
 
-
-x = new()
+var x = new()
 x.person = new()
 x.person.name = 'marc'
 x.person.age = 37
 
-v = 'test'; f = { v = 'hello, world' { v = 'yoyoyo' } }; y = f()(); v
+
+
+f = func(say) {
+	write(say)
+}
+
+f('hello maisie')
+

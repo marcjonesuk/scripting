@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 
 namespace scriptlang
 {
-
 	public class CustomFunction
 	{
 		public Func<object[], object> Invoke { get; }

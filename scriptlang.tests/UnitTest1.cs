@@ -193,7 +193,7 @@ namespace scriptlang.tests
         public void Todo()
         {
             // objects
-            Test("x = new(); x.y = 'hello, world'; len(props(x));", 1);
+            //Test("x = new(); x.y = 'hello, world'; len(props(x));", 1);
 
             // integers 
             // Test("1", 1);
