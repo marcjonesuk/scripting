@@ -4,16 +4,6 @@ using System.Threading.Tasks;
 
 namespace scriptlang
 {
-	public class CustomFunction
-	{
-		public Func<object[], object> Invoke { get; }
-
-		public CustomFunction(Func<object[], object> func)
-		{
-			Invoke = func;
-		}
-	}
-
 	public class Token
 	{
 		private readonly string rawValue;

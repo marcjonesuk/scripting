@@ -1,8 +1,9 @@
 
-y = { args(0)(12) }; 
 
-y({
-	write('sfsdf')
-	add(30, 10)	
-})
+
+x = [1,2]
+list.indexOf(x, 2)
+
+
+
 

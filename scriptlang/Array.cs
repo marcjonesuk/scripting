@@ -7,7 +7,7 @@ namespace scriptlang
 	{
 		public static void Do(Dictionary<string, object> functions)
 		{
-			functions["list.splice"] = new CustomFunction(args =>
+			functions["list.splice"] = new Function(args =>
 			{
 				if (args[0] is IList l && args.Length > 1)
 				{
@@ -17,7 +17,7 @@ namespace scriptlang
 			});
 			functions["list.length"] = functions["len"];
 			functions["list.clear"] = functions["clear"];
-			functions["list.new"] = new CustomFunction(args =>
+			functions["list.new"] = new Function(args =>
 			{
 				var list = new List<object>();
 				for (var i = 0; i < args.Length; i++)
@@ -26,9 +26,7 @@ namespace scriptlang
 				}
 				return list;
 			});
-
-
-			functions["list.indexOf"] = new CustomFunction(args =>
+			functions["list.indexOf"] = new Function(args =>
 			{
 				if (args[0] is IList l)
 				{
@@ -37,7 +35,7 @@ namespace scriptlang
 				}
 				throw new RuntimeException("The first argument to list.indexof(..) should be a list object.");
 			});
-			functions["list.push"] = new CustomFunction(args =>
+			functions["list.push"] = new Function(args =>
 			{
 				if (args[0] is IList l)
 				{
@@ -52,9 +50,8 @@ namespace scriptlang
 				}
 				return new List<object>();
 			});
-			functions["list.pop"] = new CustomFunction(args =>
+			functions["list.pop"] = new Function(args =>
 			{
-
 				return new List<object>();
 			});
 		}

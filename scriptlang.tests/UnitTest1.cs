@@ -91,9 +91,9 @@ namespace scriptlang.tests
         [TestMethod]
         public void Variables_sets()
         {
-            Test("var(x); set(x, 199); x", 199.0);
+            Test("x = 199; x", 199.0);
             Test("x = null; x", null);
-            Test("var(x, true); set(x, null); set(x, 'hello, world'); x", "hello, world");
+            Test("x = true; x = null; x = 'hello, world'; x", "hello, world");
         }
 
         [TestMethod]
@@ -172,11 +172,11 @@ namespace scriptlang.tests
         public void Lambda_expression()
         {
             //Test("y = { inc(args(0)) }; y(100)", 101.0);
-            Test("y = { z = { add(args(0), args(1)) }; z(args(0), 20) }; y(10)", 30.0);
-            Test("y = { z = { 10 } }; y()()", 10.0);
-            Test("y = { z = { add(10, args(0)) } }; y()(10)", 20.0);
-            //Test("y = { a = new(); a.name = args(0); a }; y('bob')");
-            Test("x = { add(args(0), 20) }; y = { args(0)(10) }; y(x)", 30.0);
+            //Test("y = { z = { add(args(0), args(1)) }; z(args(0), 20) }; y(10)", 30.0);
+            // Test("y = { z = { 10 } }; y()()", 10.0);
+            // Test("y = { z = { add(10, args(0)) } }; y()(10)", 20.0);
+            // //Test("y = { a = new(); a.name = args(0); a }; y('bob')");
+            // Test("x = { add(args(0), 20) }; y = { args(0)(10) }; y(x)", 30.0);
             Test("y = { args(0)(10) }; y({ add(args(0), 20) })", 30.0); // anonymous invocation gets args
         }
 
@@ -215,9 +215,10 @@ namespace scriptlang.tests
         [TestMethod]
         public void Indexers()
         {           
-            Test("l = [1,2]; l[1]", 2);
+            Test("l = [1,2]; l[1]", 2.0);
             Test("l = [1,'hello, world']; l[1]", "hello, world");
             TestThrows<RuntimeException>("l = [1,2]; l[2]");
+			Test("x = { [1,2] }; x()[0]", 1.0);
         }
 
         [TestMethod]
@@ -233,11 +234,11 @@ namespace scriptlang.tests
             Assert.AreEqual(3, list.Count);
             Assert.AreEqual(8.0, list[2]);
 
-            Test("var(y); y = [3,5,8,'a',-1]; list.push(y, 1); list.length(y)", 6);
-            Test("var(y); y = [3,5,8]; clear(y); len(y)", 0);
-            Test("var(y); y = list.new(1, 2); list.push(y, 1, 2, 3, -10, -9); list.length(y)", 7);
-            Test("var(y); y = [3,5,8]; list.indexOf(y, 5)", 1);
-            Test("var(y); y = [3,5,8]; list.indexOf(y, 7)", -1);
+            Test("y = [3,5,8,'a',-1]; list.push(y, 1); list.length(y)", 6);
+            Test("y = [3,5,8]; clear(y); len(y)", 0);
+            Test("y = list.new(1, 2); list.push(y, 1, 2, 3, -10, -9); list.length(y)", 7);
+            Test("y = [3,5,8]; list.indexOf(y, 5)", 1);
+            Test("y = [3,5,8]; list.indexOf(y, 7)", -1);
             // Test("var(y); y = [3,5,8,12]; len(list.splice(1, 2));", 2);
         }
 

@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 
@@ -31,7 +32,7 @@ namespace scriptlang
 		/*
          * Compiles a constant string down to a symbol and returns to caller.
          */
-		static (ScriptFunction, bool) CompileString(IEnumerator<Token> en)
+		static (Function, bool) CompileString(IEnumerator<Token> en)
 		{
 			// Storing type of string literal quote.
 			var quote = en.Current;
@@ -44,10 +45,10 @@ namespace scriptlang
 			var stringConstant = en.Current.ToString();
 			en.MoveNext();
 
-			return (new ScriptFunction(_ => stringConstant), !en.MoveNext());
+			return (new Function(_ => stringConstant, $"String Constant ({stringConstant})"), !en.MoveNext());
 		}
 
-		public static (ScriptFunction, bool) CompileNumber(IEnumerator<Token> en)
+		public static (Function, bool) CompileNumber(IEnumerator<Token> en)
 		{
 			var success = double.TryParse(en.Current.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out double dblResult);
 			if (!success)
@@ -55,7 +56,7 @@ namespace scriptlang
 
 			var result = (object)dblResult;
 
-			return (new ScriptFunction(_ => result), !en.MoveNext());
+			return (new Function(_ => result, $"Number Constant ({result})"), !en.MoveNext());
 		}
 
 		public static Func<object> Compile(IEnumerable<Token> tokens)
@@ -73,7 +74,7 @@ namespace scriptlang
 			};
 		}
 
-		static (ScriptFunction, bool) CompileStatement(IEnumerator<Token> en)
+		static (Function, bool) CompileStatement(IEnumerator<Token> en)
 		{
 			// Checking type of token, and acting accordingly.
 			switch (en.Current.ToString())
@@ -100,7 +101,7 @@ namespace scriptlang
 		/*
          * Compiles a lambda down to a function and returns the function to caller.
          */
-		static (ScriptFunction, bool) CompileLambda(IEnumerator<Token> en)
+		static (Function, bool) CompileLambda(IEnumerator<Token> en)
 		{
 			// Compiling body, and retrieving functions.
 			var (functions, eof) = CompileStatements(en);
@@ -109,7 +110,7 @@ namespace scriptlang
              * Creating a function that evaluates every function sequentially, and
              * returns the result of the last function evaluation to the caller.
              */
-			var function = new ScriptFunction(_ =>
+			var function = new Function(_ =>
 			{
 				object result = null;
 				foreach (var ix in functions)
@@ -117,9 +118,9 @@ namespace scriptlang
 					result = ix.Invoke(null);
 				}
 				return result;
-			});
+			}, $"Lambda ({functions.Count})");
 
-			var lazyFunction = new ScriptFunction(_ => function);
+			var lazyFunction = new Function(_ => function, "Lazy Function");
 			return (lazyFunction, eof || !en.MoveNext());
 		}
 
@@ -130,10 +131,10 @@ namespace scriptlang
          * If "forceClose" is true, it will expect a brace '}' to end the lambda segment,
          * and throw an exception if it finds EOF before it finds the closing '}'.
          */
-		static (List<ScriptFunction>, bool) CompileStatements(IEnumerator<Token> en, bool forceClose = true)
+		static (List<Function>, bool) CompileStatements(IEnumerator<Token> en, bool forceClose = true)
 		{
 			// Creating a list of functions and returning these to caller.
-			var functions = new List<ScriptFunction>();
+			var functions = new List<Function>();
 			var eof = !en.MoveNext();
 			while (!eof && en.Current != "}")
 			{
@@ -159,9 +160,9 @@ namespace scriptlang
 		}
 
 
-		static (ScriptFunction, bool) CompileList(IEnumerator<Token> en)
+		static (Function, bool) CompileList(IEnumerator<Token> en)
 		{
-			var items = new List<ScriptFunction>();
+			var items = new List<Function>();
 
 			// Sanity checking tokenizer's content.
 			if (!en.MoveNext())
@@ -182,7 +183,7 @@ namespace scriptlang
 				if (!en.MoveNext())
 					throw new CompilerException("Unexpected EOF while parsing list.");
 			}
-			return (new ScriptFunction(_ =>
+			return (new Function(_ =>
 			{
 				var list = new List<object>();
 				foreach (var ix in items)
@@ -190,13 +191,13 @@ namespace scriptlang
 					list.Add(ix.Invoke(null));
 				}
 				return list;
-			}), !en.MoveNext());
+			}, "List Constant"), !en.MoveNext());
 		}
 
-		static (ScriptFunction, bool) CompileChainedCall(IEnumerator<Token> en, ScriptFunction sf)
+		static (Function, bool) CompileChainedCall(IEnumerator<Token> en, Function sf)
 		{
 			// Used to hold arguments before they're being applied inside of function evaluation.
-			var arguments = new List<ScriptFunction>();
+			var arguments = new List<Function>();
 
 			// Sanity checking tokenizer's content.
 			if (!en.MoveNext())
@@ -212,7 +213,7 @@ namespace scriptlang
 					break; // And we are done parsing arguments.
 			}
 
-			return (new ScriptFunction(_ =>
+			return (new Function(_ =>
 			{
 				var args = new object[arguments.Count];
 				for (var a = 0; a < arguments.Count; a++)
@@ -220,31 +221,22 @@ namespace scriptlang
 					var value = arguments[a].Invoke(null);
 					args[a] = value;
 				}
-				
-				var result = sf.Invoke(null);
-				var s = result as CustomFunction;
-				if (s == null) {
-					if (result is ScriptFunction c) {
-						State.Args.Push(args);
-                        State.StackDepth++;
-						State.Functions.Add(new Dictionary<string, object>());
-                        var res = c.Invoke(args);
-                        State.Args.Pop();
-						State.Functions.RemoveAt(State.StackDepth);
-                        State.StackDepth--;
-                        return res;
-					}
-					throw new RuntimeException("Unable to invoke result");
-				}
-				return s.Invoke(args);
-			}), !en.MoveNext());
-		}
 
+				var result = sf.Invoke(null);
+				if (result is Function c)
+				{
+					return State.InvokeWithStack(sf, args);
+				}
+				throw new RuntimeException("Unable to invoke result");
+
+			}, "Chained Lambda Invocation"), !en.MoveNext());
+		}
+		
 		/*
          * Compiles a symbolic reference down to a function invocation and returns
          * that function to caller.
          */
-		static (ScriptFunction, bool) CompileSymbol(IEnumerator<Token> en)
+		static (Function, bool) CompileSymbol(IEnumerator<Token> en)
 		{
 			// Retrieving symbol's name and sanity checking it.
 			var symbolName = en.Current.ToString();
@@ -264,6 +256,8 @@ namespace scriptlang
 			// Checking if this is a function invocation.
 			if (!eof && en.Current.ToString() == "(")
 			{
+				if (parts[0] == "list")
+					symbolName = parts[0] + "." + parts[1];
 				// Function invocation, making sure we apply arguments,
 				//return ApplyArguments<TContext>(symbolName, en);
 				var x = (ApplyArguments(symbolName, en));
@@ -273,15 +267,38 @@ namespace scriptlang
 				}
 				return x;
 			}
+			else if (!eof && en.Current.ToString() == "[")
+			{
+				// Indexer
+				eof = !en.MoveNext();
+				var success = int.TryParse(en.Current, out int index);
+
+				if (!success)
+					throw new CompilerException("Indexer");
+
+				eof = !en.MoveNext();
+				if (en.Current != "]")
+					throw new CompilerException($"Expected ], got {en.Current}");
+
+				return (new Function(_ =>
+				{
+					dynamic v = State.GetValue(parts);
+					try
+					{
+						return v[index];
+					}
+					catch (ArgumentOutOfRangeException ex)
+					{
+						throw new RuntimeException("Index out of range");
+					}
+				}, $"Indexer [{en.Current}]"), !en.MoveNext());
+			}
 			else if (!eof && en.Current.ToString() == "=")
 			{
 				// Variable assignment
 				en.MoveNext();
 				var (value, neof) = CompileStatement(en);
-				return (new ScriptFunction(_ =>
-				{
-					return State.SetValue(parts, value);
-				})
+				return (new Function(_ => State.SetValue(parts, value), $"Variable Assignment ({symbolName})")
 				{ SymbolName = symbolName }, neof);
 			}
 			else
@@ -294,10 +311,7 @@ namespace scriptlang
 				{
 					throw new CompilerException("if function does not have any arguments. Example: if({ ... }, /* else */ { ... })");
 				}
-				return (new ScriptFunction(_ =>
-				{
-					return State.GetValue(parts);
-				})
+				return (new Function(_ => State.GetValue(parts), $"Variable Getter ({string.Join('.', parts)}")
 				{ SymbolName = symbolName }, eof);
 			}
 		}
@@ -305,10 +319,10 @@ namespace scriptlang
 		/*
          * Applies arguments to a function invoction, such that they're evaluated at runtime.
          */
-		static (ScriptFunction, bool) ApplyArguments(string symbolName, IEnumerator<Token> en)
+		static (Function, bool) ApplyArguments(string symbolName, IEnumerator<Token> en)
 		{
 			// Used to hold arguments before they're being applied inside of function evaluation.
-			var arguments = new List<ScriptFunction>();
+			var arguments = new List<Function>();
 
 			// Sanity checking tokenizer's content.
 			if (!en.MoveNext())
@@ -319,6 +333,7 @@ namespace scriptlang
 			{
 				// Compiling current argument.
 				var (func, eof) = CompileStatement(en);
+				func.Name += ":Argument";
 				arguments.Add(func);
 				if (en.Current == ")")
 					break; // And we are done parsing arguments.
@@ -330,7 +345,7 @@ namespace scriptlang
 					throw new CompilerException("Unexpected EOF while parsing arguments to function invocation.");
 			}
 
-			return (new ScriptFunction(_ =>
+			return (new Function(_ =>
 			{
 				var args = new object[arguments.Count];
 				for (var a = 0; a < arguments.Count; a++)
@@ -348,12 +363,12 @@ namespace scriptlang
 				var (func, found) = State.Resolve(symbolName);
 				if (!found)
 					throw new RuntimeException($"Cannot resolve symbol {symbolName}");
-				
-				return ((CustomFunction)func).Invoke(args);
-			}), !en.MoveNext());
+
+				return ((Function)func).Invoke(args);
+			}, $"Function Invocation with Args"), !en.MoveNext());
 		}
 
-		static (ScriptFunction, bool) CompileSymbolReference(IEnumerator<Token> en)
+		static (Function, bool) CompileSymbolReference(IEnumerator<Token> en)
 		{
 			// Sanity checking tokenizer's content, since an '@' must reference an actual symbol.
 			if (!en.MoveNext())
@@ -385,7 +400,7 @@ namespace scriptlang
 				// {
 				// 	return functor;
 				// }), tuple.Item2);
-				return (new ScriptFunction(_ => func), neof);
+				return (new Function(_ => func), neof);
 			}
 			else
 			{
@@ -394,7 +409,7 @@ namespace scriptlang
                  * When you use the '@' character with a symbol, this implies simply returning the
                  * symbol's name.
                  */
-				return (new ScriptFunction(_ => symbolName), eof);
+				return (new Function(_ => symbolName), eof);
 			}
 		}
 	}
