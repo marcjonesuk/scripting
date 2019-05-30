@@ -45,7 +45,7 @@ namespace scriptlang
 			var stringConstant = en.Current.ToString();
 			en.MoveNext();
 
-			return (new Function(_ => stringConstant, $"String Constant ({stringConstant})"), !en.MoveNext());
+			return (new Function((state, _) => stringConstant, $"String Constant ({stringConstant})"), !en.MoveNext());
 		}
 
 		public static (Function, bool) CompileNumber(IEnumerator<Token> en)
@@ -56,10 +56,10 @@ namespace scriptlang
 
 			var result = (object)dblResult;
 
-			return (new Function(_ => result, $"Number Constant ({result})"), !en.MoveNext());
+			return (new Function((state, _) => result, $"Number Constant ({result})"), !en.MoveNext());
 		}
 
-		public static Func<object> Compile(IEnumerable<Token> tokens)
+		public static Func<object> Compile(State state, IEnumerable<Token> tokens)
 		{
 			var en = tokens.GetEnumerator();
 			var (functions, eof) = Compiler.CompileStatements(en, false);
@@ -68,10 +68,16 @@ namespace scriptlang
 				object result = null;
 				foreach (var ix in functions)
 				{
-					result = ix.Invoke(null);
+					result = ix.Invoke(state, null);
 				}
 				return result;
 			};
+		}
+
+		public static Func<object> Compile(IEnumerable<Token> tokens)
+		{
+			var state = new State();
+			return Compile(state, tokens);
 		}
 
 		static (Function, bool) CompileStatement(IEnumerator<Token> en)
@@ -110,17 +116,17 @@ namespace scriptlang
              * Creating a function that evaluates every function sequentially, and
              * returns the result of the last function evaluation to the caller.
              */
-			var function = new Function(_ =>
+			var function = new Function((state, _) =>
 			{
 				object result = null;
 				foreach (var ix in functions)
 				{
-					result = ix.Invoke(null);
+					result = ix.Invoke(state, null);
 				}
 				return result;
 			}, $"Lambda ({functions.Count})");
 
-			var lazyFunction = new Function(_ => function, "Lazy Function");
+			var lazyFunction = new Function((state, _) => function, "Lazy Function");
 			return (lazyFunction, eof || !en.MoveNext());
 		}
 
@@ -183,12 +189,12 @@ namespace scriptlang
 				if (!en.MoveNext())
 					throw new CompilerException("Unexpected EOF while parsing list.");
 			}
-			return (new Function(_ =>
+			return (new Function((state, _) =>
 			{
 				var list = new List<object>();
 				foreach (var ix in items)
 				{
-					list.Add(ix.Invoke(null));
+					list.Add(ix.Invoke(state, null));
 				}
 				return list;
 			}, "List Constant"), !en.MoveNext());
@@ -213,25 +219,25 @@ namespace scriptlang
 					break; // And we are done parsing arguments.
 			}
 
-			return (new Function(_ =>
+			return (new Function((state, _) =>
 			{
 				var args = new object[arguments.Count];
 				for (var a = 0; a < arguments.Count; a++)
 				{
-					var value = arguments[a].Invoke(null);
+					var value = arguments[a].Invoke(state, null);
 					args[a] = value;
 				}
 
-				var result = sf.Invoke(null);
+				var result = sf.Invoke(state, null);
 				if (result is Function c)
 				{
-					return State.InvokeWithStack(sf, args);
+					return state.InvokeWithStack(sf, args);
 				}
 				throw new RuntimeException("Unable to invoke result");
 
 			}, "Chained Lambda Invocation"), !en.MoveNext());
 		}
-		
+
 		/*
          * Compiles a symbolic reference down to a function invocation and returns
          * that function to caller.
@@ -280,9 +286,9 @@ namespace scriptlang
 				if (en.Current != "]")
 					throw new CompilerException($"Expected ], got {en.Current}");
 
-				return (new Function(_ =>
+				return (new Function((state, _) =>
 				{
-					dynamic v = State.GetValue(parts);
+					dynamic v = state.GetValue(parts);
 					try
 					{
 						return v[index];
@@ -298,7 +304,7 @@ namespace scriptlang
 				// Variable assignment
 				en.MoveNext();
 				var (value, neof) = CompileStatement(en);
-				return (new Function(_ => State.SetValue(parts, value), $"Variable Assignment ({symbolName})")
+				return (new Function((state, _) => state.SetValue(parts, value), $"Variable Assignment ({symbolName})")
 				{ SymbolName = symbolName }, neof);
 			}
 			else
@@ -311,7 +317,7 @@ namespace scriptlang
 				{
 					throw new CompilerException("if function does not have any arguments. Example: if({ ... }, /* else */ { ... })");
 				}
-				return (new Function(_ => State.GetValue(parts), $"Variable Getter ({string.Join('.', parts)}")
+				return (new Function((state, _) => state.GetValue(parts), $"Variable Getter ({string.Join('.', parts)}")
 				{ SymbolName = symbolName }, eof);
 			}
 		}
@@ -345,14 +351,14 @@ namespace scriptlang
 					throw new CompilerException("Unexpected EOF while parsing arguments to function invocation.");
 			}
 
-			return (new Function(_ =>
+			return (new Function((state, _) =>
 			{
 				var args = new object[arguments.Count];
 				for (var a = 0; a < arguments.Count; a++)
 				{
 					if (symbolName != "var" && symbolName != "const" && symbolName != "set" && symbolName != "inc" && symbolName != "dec")
 					{
-						var value = arguments[a].Invoke(null);
+						var value = arguments[a].Invoke(state, null);
 						args[a] = value;
 					}
 					else
@@ -360,11 +366,11 @@ namespace scriptlang
 						args[a] = arguments[a];
 					}
 				}
-				var (func, found) = State.Resolve(symbolName);
+				var (func, found) = state.Resolve(symbolName);
 				if (!found)
 					throw new RuntimeException($"Cannot resolve symbol {symbolName}");
 
-				return ((Function)func).Invoke(args);
+				return ((Function)func).Invoke(state, args);
 			}, $"Function Invocation with Args"), !en.MoveNext());
 		}
 
@@ -400,7 +406,7 @@ namespace scriptlang
 				// {
 				// 	return functor;
 				// }), tuple.Item2);
-				return (new Function(_ => func), neof);
+				return (new Function((state, _) => func), neof);
 			}
 			else
 			{
@@ -409,7 +415,7 @@ namespace scriptlang
                  * When you use the '@' character with a symbol, this implies simply returning the
                  * symbol's name.
                  */
-				return (new Function(_ => symbolName), eof);
+				return (new Function((state, _) => symbolName), eof);
 			}
 		}
 	}

@@ -8,17 +8,17 @@ namespace scriptlang
 {
 	public class State
 	{
-		public static Stack<object[]> Args = new Stack<object[]>();
-		public static int StackDepth = 0;
+		public Stack<object[]> Args = new Stack<object[]>();
+		public int StackDepth = 0;
 		//public static Dictionary<string, object> Functions = new Dictionary<string, object>();
 
-		public static List<Dictionary<string, object>> Functions = new List<Dictionary<string, object>>();
+		public List<Dictionary<string, object>> Functions = new List<Dictionary<string, object>>();
 
-		public static Dictionary<string, object> Global = new Dictionary<string, object>();
+		public Dictionary<string, object> Global = new Dictionary<string, object>();
 
-		public static HashSet<string> Const = new HashSet<string>();
+		public HashSet<string> Const = new HashSet<string>();
 
-		static void AssertArgCount(object[] args, int count, string functionName)
+		void AssertArgCount(object[] args, int count, string functionName)
 		{
 			if (args.Length != count)
 			{
@@ -26,7 +26,7 @@ namespace scriptlang
 			}
 		}
 
-		public static (object, bool) Resolve(string name)
+		public (object, bool) Resolve(string name)
 		{
 			for (var stack = Functions.Count - 1; stack >= 0; stack--)
 			{
@@ -36,7 +36,7 @@ namespace scriptlang
 			return (null, false);
 		}
 
-		public static object GetValue(List<string> parts)
+		public object GetValue(List<string> parts)
 		{
 			var (result, found) = Resolve(parts[0]);
 			if (!found)
@@ -53,7 +53,7 @@ namespace scriptlang
 			return current;
 		}
 
-		private static object GetObjectProperty(object root, string property)
+		private object GetObjectProperty(object root, string property)
 		{
 			if (root is IDictionary<string, object> dict)
 			{
@@ -64,7 +64,7 @@ namespace scriptlang
 			throw new RuntimeException("TODO: cant get property");
 		}
 
-		private static object SetObjectProperty(object obj, string property, object value)
+		private object SetObjectProperty(object obj, string property, object value)
 		{
 			if (obj is IDictionary<string, object> dict)
 			{
@@ -74,10 +74,10 @@ namespace scriptlang
 			throw new RuntimeException("TODO: cant get property");
 		}
 
-		public static object SetValue(List<string> parts, Function value)
+		public object SetValue(List<string> parts, Function value)
 		{
 			if (parts.Count == 1)
-				return ((Function)Global["set"]).Invoke(new object[] { parts[0], value });
+				return ((Function)Global["set"]).Invoke(this, new object[] { parts[0], value });
 
 			var (current, found) = Resolve(parts[0]);
 			if (!found)
@@ -89,31 +89,31 @@ namespace scriptlang
 			{
 				var p = parts[i];
 				if (i == parts.Count - 1)
-					return SetObjectProperty(current, p, value.Invoke(null));
+					return SetObjectProperty(current, p, value.Invoke(this, null));
 				current = GetObjectProperty(current, p);
 			}
 			throw new RuntimeException("SetValue failed");
 		}
 
-		public static object InvokeWithStack(Function sf, object[] args)
+		public object InvokeWithStack(Function sf, object[] args)
 		{
 			Args.Push(args);
 			StackDepth++;
 			Functions.Add(new Dictionary<string, object>());
-			var result = sf.Invoke(args);
+			var result = sf.Invoke(this, args);
 			Args.Pop();
 			Functions.RemoveAt(StackDepth);
 			StackDepth--;
 			return result;
 		}
 
-		static State()
+		public State()
 		{
 			Functions.Add(Global);
 
 			Const.Add("var");
 
-			Global["args"] = new Function(args =>
+			Global["args"] = new Function((state, args) =>
 			{
 				if (args.Length == 0)
 					return Args.Peek();
@@ -122,7 +122,7 @@ namespace scriptlang
 				return Args.Peek()[index];
 			});
 
-			Global["props"] = new Function(args =>
+			Global["props"] = new Function((state, args) =>
 			{
 				if (args[0] is IDictionary<string, object> d)
 				{
@@ -132,7 +132,7 @@ namespace scriptlang
 			});
 
 			Const.Add("const");
-			Global["const"] = new Function(args =>
+			Global["const"] = new Function((state, args) =>
 			{
 				var func = args[0] as Function;
 
@@ -144,7 +144,7 @@ namespace scriptlang
 				if (args.Length > 1)
 				{
 					var valueFunc = args[1] as Function;
-					Global[variableName] = valueFunc.Invoke(null);
+					Global[variableName] = valueFunc.Invoke(state, null);
 					Const.Add(variableName);
 				}
 				else
@@ -155,7 +155,7 @@ namespace scriptlang
 			});
 
 			Const.Add("set");
-			Global["set"] = new Function(args =>
+			Global["set"] = new Function((state, args) =>
 			{
 				string varName;
 				if (args[0] is string s)
@@ -178,10 +178,10 @@ namespace scriptlang
 				{
 					throw new RuntimeException($"Cannot assign to const variable {varName}");
 				}
-				var newValue = ((Function)args[1]).Invoke(null);
+				var newValue = ((Function)args[1]).Invoke(state, null);
 				if (newValue is Function sf)
 				{
-					newValue = new Function(lambdaArgs =>
+					newValue = new Function((st, lambdaArgs) =>
 					{
 						return InvokeWithStack(sf, lambdaArgs);
 					});
@@ -192,17 +192,17 @@ namespace scriptlang
 			});
 
 			Const.Add("throw");
-			Global["throw"] = new Function(args =>
+			Global["throw"] = new Function((state, args) =>
 			{
 				throw new Exception(args[0].ToString());
 			});
 
-			Global["write"] = new Function(args =>
+			Global["write"] = new Function((state, args) =>
 			{
 				Console.WriteLine(args[0].ToString());
 				return null;
 			});
-			Global["new"] = new Function(args =>
+			Global["new"] = new Function((state, args) =>
 			{
 				if (args.Length == 0)
 					return new ExpandoObject();
@@ -221,12 +221,12 @@ namespace scriptlang
 				throw new RuntimeException();
 			});
 
-			Global["add"] = new Function(args =>
+			Global["add"] = new Function((state, args) =>
 			{
 				return (dynamic)args[0] + (dynamic)args[1];
 			});
 
-			Global["len"] = new Function(args =>
+			Global["len"] = new Function((state, args) =>
 			{
 				if (args[0] is string s)
 					return s.Length;
@@ -238,7 +238,7 @@ namespace scriptlang
 				throw new RuntimeException($"Cannot use len function on type {args[0].GetType()}");
 			});
 
-			Global["clear"] = new Function(args =>
+			Global["clear"] = new Function((state, args) =>
 			{
 				if (args[0] is IList l)
 				{
@@ -248,7 +248,7 @@ namespace scriptlang
 				throw new RuntimeException($"Cannot use len function on type {args[0].GetType()}");
 			});
 
-			Global["inc"] = new Function(args =>
+			Global["inc"] = new Function((state, args) =>
 			{
 				// todo handle local state
 				// AssertArgCount(args, 1, "inc");
@@ -263,7 +263,7 @@ namespace scriptlang
 				return null;
 			});
 
-			Global["dec"] = new Function(args =>
+			Global["dec"] = new Function((state, args) =>
 			{
 				// AssertArgCount(args, 1, "inc");
 				// var s = args[0] as ScriptFunction;
@@ -277,7 +277,7 @@ namespace scriptlang
 				return null;
 			});
 
-			Global["eq"] = new Function(args =>
+			Global["eq"] = new Function((state, args) =>
 			{
 				AssertArgCount(args, 2, "eq");
 				var arg1 = args[0];
@@ -297,13 +297,13 @@ namespace scriptlang
 			});
 
 			Const.Add("if");
-			Global["if"] = new Function(args =>
+			Global["if"] = new Function((state, args) =>
 			{
 				if (Truthy(args[0]))
 				{
 					if (args[1] is Function s)
 					{
-						return s.Invoke(null);
+						return s.Invoke(state, null);
 					}
 					else
 					{
@@ -316,7 +316,7 @@ namespace scriptlang
 					{
 						if (args[2] is Function s)
 						{
-							return s.Invoke(null);
+							return s.Invoke(state, null);
 						}
 						else
 						{
@@ -327,19 +327,19 @@ namespace scriptlang
 				}
 			});
 
-			Global["json"] = new Function(args =>
+			Global["json"] = new Function((state, args) =>
 			{
 				return JsonConvert.SerializeObject(args[0]);
 			});
 
 			Const.Add("not");
-			Global["not"] = new Function(args =>
+			Global["not"] = new Function((state, args) =>
 			{
 				return !Truthy(args[0]);
 			});
 
 			Const.Add("try");
-			Global["try"] = new Function(args =>
+			Global["try"] = new Function((state, args) =>
 			{
 				if (args.Length == 0)
 				{
