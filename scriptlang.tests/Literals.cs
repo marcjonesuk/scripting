@@ -8,7 +8,6 @@ namespace scriptlang.tests
     [TestClass]
     public class Literals: UnitTest1
     {
-		
         [TestMethod]
         public void Numbers()
         {

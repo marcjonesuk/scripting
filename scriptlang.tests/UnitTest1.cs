@@ -182,42 +182,11 @@ namespace scriptlang.tests
 			Test("v = 'test'; f = { v = 'hello, world' { v = 'yoyoyo' } }; y = f()(); v", "test");
 		}
 
-        [TestMethod]
-        public void Indexers()
-        {           
-            Test("l = [1,2]; l[1]", 2.0);
-            //Test("l = [1,'hello, world']; l[1]", "hello, world");
-            //TestThrows<RuntimeException>("l = [1,2]; l[2]");
-			//Test("x = { [1,2] }; x()[0]", 1.0);
-        }
-
 		[TestMethod]
-        public void Indexers_Errors()
-        {           
-            TestThrows<RuntimeException>("l = [1,2]; l[2]");
-			TestThrows<RuntimeException>("l = [1,2]; l[-1]");
-        }
-
-        [TestMethod]
-        public void Lists()
+        public void TypedVariables()
         {
-            var code = "[]";
-            var tokenizer = new Tokenizer(new LizzieTokenizer());
-            var func = Compiler.Compile(tokenizer.Tokenize(code))();
-            Assert.AreEqual(typeof(List<object>), func.GetType());
-
-            code = "[3,5,8]";
-            var list = (List<object>)Compiler.Compile(tokenizer.Tokenize(code))();
-            Assert.AreEqual(3, list.Count);
-            Assert.AreEqual(8.0, list[2]);
-
-            Test("y = [3,5,8,'a',-1]; list.push(y, 1); list.length(y)", 6);
-            Test("y = [3,5,8]; clear(y); len(y)", 0);
-            Test("y = list.new(1, 2); list.push(y, 1, 2, 3, -10, -9); list.length(y)", 7);
-            Test("y = [3,5,8]; list.indexOf(y, 5)", 1);
-            Test("y = [3,5,8]; list.indexOf(y, 7)", -1);
-            // Test("var(y); y = [3,5,8,12]; len(list.splice(1, 2));", 2);
-        }
+			TestThrows<RuntimeException>("double x = 5.0; x = 'hello, world'");
+		}
 
         [TestMethod]
         public void Arguments()

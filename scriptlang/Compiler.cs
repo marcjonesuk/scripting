@@ -265,7 +265,7 @@ namespace scriptlang
 			// Checking if this is a function invocation.
 			if (!eof && en.Current.ToString() == "(")
 			{
-				if (parts[0] == "list" || parts[0] == "math")
+				if (parts[0] == "list" || parts[0] == "math"|| parts[0] == "stopwatch")
 					symbolName = parts[0] + "." + parts[1];
 				// Function invocation, making sure we apply arguments,
 				//return ApplyArguments<TContext>(symbolName, en);

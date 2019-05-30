@@ -113,6 +113,17 @@ namespace scriptlang
 				return (dynamic)args[0] + (dynamic)args[1];
 			});
 
+			current.Add("loop", (state, args) =>
+			{
+				var top = Convert.ToInt64(args[0]);
+				var func = args[1] as Function;
+				object result = null;
+				for(var i = 0; i < top; i++) {
+					result = func.Invoke(state, null);
+				}
+				return result;
+			});
+
 			current.Add("len", (state, args) =>
 			{
 				if (args[0] is string s)
@@ -166,6 +177,9 @@ namespace scriptlang
 
 			current.Add("eq", (state, args) =>
 			{
+				if (args.Length < 2) {
+					throw new RuntimeException("eq() requires two arguments");
+				}
 				return Equal(args);
 			});
 
