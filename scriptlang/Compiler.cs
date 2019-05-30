@@ -79,6 +79,7 @@ namespace scriptlang
 			var state = new State();
 			StandardLibrary.Bootstrap(state);
 			ListFunctions.Bootstrap(state);
+			MathFunctions.Bootstrap(state);
 			return Compile(state, tokens);
 		}
 
@@ -264,7 +265,7 @@ namespace scriptlang
 			// Checking if this is a function invocation.
 			if (!eof && en.Current.ToString() == "(")
 			{
-				if (parts[0] == "list")
+				if (parts[0] == "list" || parts[0] == "math")
 					symbolName = parts[0] + "." + parts[1];
 				// Function invocation, making sure we apply arguments,
 				//return ApplyArguments<TContext>(symbolName, en);

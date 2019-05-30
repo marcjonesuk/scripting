@@ -33,36 +33,12 @@ namespace scriptlang.tests
         }
 
         [TestMethod]
-        public void Numbers()
-        {
-            //Test("10", 10.0);
-            //Test("-10", -10.0);
-            Test("-10.9012", -10.9012);
-            //Test("106223.23423443", 106223.23423443);
-        }
-
-        [TestMethod]
-        public void Keywords()
-        {
-            Test("null", null);
-            Test("false", false);
-            Test("true", true);
-        }
-
-        [TestMethod]
         public void New()
         {
             Test("len(props(new()))", 0);
             Test("first = new(); first.x = 100; first.y = 'hello, world'; j = json(first); second = new(j); second.y", "hello, world");
             Test("l = [1,2]; k = json(l); len(new(k))", 2);
             // Test("p = new(); p.age = 100; l = []; push(l, p); new(json(l)); ", );
-        }
-
-        [TestMethod]
-        public void Strings()
-        {
-            Test("'hello, world'", "hello, world");
-            Test("''", "");
         }
 
         [TestMethod]

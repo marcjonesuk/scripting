@@ -1,11 +1,10 @@
-
-x = [1,2]
-list.push(x, 'hello')
-list.length(x)
-
-y = {
-
+assert = {
+	if(ne(args(0), args(1)), {
+		throw(args(2))
+	})
 }
 
-// person = @{ name: 'hello', age: { number: 10 }}
+x = math.round(5.1, 0)
+y = math.round(10.9)
+assert(16, add(x,y))
 

@@ -8,6 +8,23 @@ namespace scriptlang
 {
 	public class StandardLibrary
 	{
+		public static bool Equal(object[] args)
+		{
+			// AssertArgCount(args, 2, "eq");
+			var arg1 = args[0];
+
+			// Comparing all other objects to the first.
+			for (var i = 1; i < args.Length; i++)
+			{
+				var ix = args[i];
+				if (arg1 == null && ix != null || arg1 != null && ix == null)
+					return false;
+				if (arg1 != null && !arg1.Equals(ix))
+					return false;
+			}
+			return true;
+		}
+
 		public static void Bootstrap(State current)
 		{
 			current.Add("args", (state, args) =>
@@ -63,7 +80,7 @@ namespace scriptlang
 			current.MakeConst("throw");
 			current.Add("throw", (state, args) =>
 			{
-				throw new Exception(args[0].ToString());
+				throw new RuntimeException(args[0].ToString());
 			});
 
 			current.Add("write", (state, args) =>
@@ -149,21 +166,12 @@ namespace scriptlang
 
 			current.Add("eq", (state, args) =>
 			{
-				// AssertArgCount(args, 2, "eq");
-				var arg1 = args[0];
+				return Equal(args);
+			});
 
-				// Comparing all other objects to the first.
-				for (var i = 1; i < args.Length; i++)
-				{
-					var ix = args[i];
-					if (arg1 == null && ix != null || arg1 != null && ix == null)
-						return false;
-					if (arg1 != null && !arg1.Equals(ix))
-						return false;
-				}
-
-				// Equality!
-				return (object)true;
+			current.Add("ne", (state, args) =>
+			{
+				return !Equal(args);
 			});
 
 			current.MakeConst("if");
