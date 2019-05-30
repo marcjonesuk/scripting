@@ -1,9 +1,11 @@
 
-
-
 x = [1,2]
-list.indexOf(x, 2)
+list.push(x, 'hello')
+list.length(x)
 
+y = {
 
+}
 
+// person = @{ name: 'hello', age: { number: 10 }}
 

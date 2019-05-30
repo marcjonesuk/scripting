@@ -45,7 +45,7 @@ namespace scriptlang
 			var stringConstant = en.Current.ToString();
 			en.MoveNext();
 
-			return (new Function((state, _) => stringConstant, $"String Constant ({stringConstant})"), !en.MoveNext());
+			return (new Function((state, _) => stringConstant, FunctionType.StringConst), !en.MoveNext());
 		}
 
 		public static (Function, bool) CompileNumber(IEnumerator<Token> en)
@@ -56,7 +56,7 @@ namespace scriptlang
 
 			var result = (object)dblResult;
 
-			return (new Function((state, _) => result, $"Number Constant ({result})"), !en.MoveNext());
+			return (new Function((state, _) => result, FunctionType.NumberConst), !en.MoveNext());
 		}
 
 		public static Func<object> Compile(State state, IEnumerable<Token> tokens)
@@ -77,6 +77,8 @@ namespace scriptlang
 		public static Func<object> Compile(IEnumerable<Token> tokens)
 		{
 			var state = new State();
+			StandardLibrary.Bootstrap(state);
+			ListFunctions.Bootstrap(state);
 			return Compile(state, tokens);
 		}
 
@@ -124,9 +126,9 @@ namespace scriptlang
 					result = ix.Invoke(state, null);
 				}
 				return result;
-			}, $"Lambda ({functions.Count})");
+			}, FunctionType.Lambda);
 
-			var lazyFunction = new Function((state, _) => function, "Lazy Function");
+			var lazyFunction = new Function((state, _) => function, FunctionType.Lazy);
 			return (lazyFunction, eof || !en.MoveNext());
 		}
 
@@ -197,7 +199,7 @@ namespace scriptlang
 					list.Add(ix.Invoke(state, null));
 				}
 				return list;
-			}, "List Constant"), !en.MoveNext());
+			}, FunctionType.ListConst), !en.MoveNext());
 		}
 
 		static (Function, bool) CompileChainedCall(IEnumerator<Token> en, Function sf)
@@ -235,7 +237,7 @@ namespace scriptlang
 				}
 				throw new RuntimeException("Unable to invoke result");
 
-			}, "Chained Lambda Invocation"), !en.MoveNext());
+			}, FunctionType.Lambda), !en.MoveNext());
 		}
 
 		/*
@@ -297,14 +299,14 @@ namespace scriptlang
 					{
 						throw new RuntimeException("Index out of range");
 					}
-				}, $"Indexer [{en.Current}]"), !en.MoveNext());
+				}, FunctionType.Indexer), !en.MoveNext());
 			}
 			else if (!eof && en.Current.ToString() == "=")
 			{
 				// Variable assignment
 				en.MoveNext();
 				var (value, neof) = CompileStatement(en);
-				return (new Function((state, _) => state.SetValue(parts, value), $"Variable Assignment ({symbolName})")
+				return (new Function((state, _) => state.SetValue(parts, value), FunctionType.Assignment)
 				{ SymbolName = symbolName }, neof);
 			}
 			else
@@ -317,7 +319,7 @@ namespace scriptlang
 				{
 					throw new CompilerException("if function does not have any arguments. Example: if({ ... }, /* else */ { ... })");
 				}
-				return (new Function((state, _) => state.GetValue(parts), $"Variable Getter ({string.Join('.', parts)}")
+				return (new Function((state, _) => state.GetValue(parts), FunctionType.Getter)
 				{ SymbolName = symbolName }, eof);
 			}
 		}
@@ -339,7 +341,6 @@ namespace scriptlang
 			{
 				// Compiling current argument.
 				var (func, eof) = CompileStatement(en);
-				func.Name += ":Argument";
 				arguments.Add(func);
 				if (en.Current == ")")
 					break; // And we are done parsing arguments.
@@ -371,7 +372,7 @@ namespace scriptlang
 					throw new RuntimeException($"Cannot resolve symbol {symbolName}");
 
 				return ((Function)func).Invoke(state, args);
-			}, $"Function Invocation with Args"), !en.MoveNext());
+			}, FunctionType.InvocationWithArgs), !en.MoveNext());
 		}
 
 		static (Function, bool) CompileSymbolReference(IEnumerator<Token> en)

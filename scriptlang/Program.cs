@@ -30,7 +30,7 @@ namespace scriptlang
 		{
 			var code = File.ReadAllText("test.script");
 			var tokenizer = new Tokenizer(new LizzieTokenizer());
-			var func = Compiler.Compile(new State(), tokenizer.Tokenize(code));
+			var func = Compiler.Compile(tokenizer.Tokenize(code));
 			Console.WriteLine(func.Invoke());
 		}
 	}

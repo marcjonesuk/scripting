@@ -122,19 +122,6 @@ namespace scriptlang.tests
             Test("eq(1.0, 1)", true);
         }
 
-        [TestMethod]
-        public void If()
-        {
-            Test("x = false; if(true, { x = true }); x", true);
-            Test("x = false; if(false, { set(x, true) }); x", false);
-            Test("if(true, { 'ok' })", "ok");
-            Test("if(eq(null, false), { 5 }, { 10 })", 10.0);
-            Test("if('hello, world', 'ok', 'not ok')", "ok");
-            // Test("var(x, if(false, 'not ok', 'ok')); x", "ok");
-            TestThrows<CompilerException>("if");
-            TestThrows<CompilerException>("if { }");
-            TestThrows<RuntimeException>("if = null");
-        }
 
         [TestMethod]
         public void Not()
@@ -147,12 +134,17 @@ namespace scriptlang.tests
         }
 
         [TestMethod]
-        public void Assignments()
+        public void Simple_Assignments()
         {
+			Test("x = 10.1; x", 10.1);
             Test("x = -101.2;", -101.2);
             Test("x = 5; x", 5.0);
-            Test("if(true, { x = 10.1 }); x", 10.1);
-            Test("x = 10.1; x", 10.1);
+        }
+
+		[TestMethod]
+        public void Other_Assignments()
+        {
+        	Test("if(true, { x = 10.1 }); x", 10.1);
             Test("if(true, { x = 10.2 }); x", 10.2);
             Test("y = { x = 10.2; true }; not(y())", false);
         }
@@ -171,13 +163,15 @@ namespace scriptlang.tests
         [TestMethod]
         public void Lambda_expression()
         {
+			Test("y = { 5 }; y()", 5.0);
+			
             //Test("y = { inc(args(0)) }; y(100)", 101.0);
             //Test("y = { z = { add(args(0), args(1)) }; z(args(0), 20) }; y(10)", 30.0);
             // Test("y = { z = { 10 } }; y()()", 10.0);
             // Test("y = { z = { add(10, args(0)) } }; y()(10)", 20.0);
             // //Test("y = { a = new(); a.name = args(0); a }; y('bob')");
             // Test("x = { add(args(0), 20) }; y = { args(0)(10) }; y(x)", 30.0);
-            Test("y = { args(0)(10) }; y({ add(args(0), 20) })", 30.0); // anonymous invocation gets args
+            //Test("y = { args(0)(10) }; y({ add(args(0), 20) })", 30.0); // anonymous invocation gets args
         }
 
         [TestMethod]
@@ -216,9 +210,16 @@ namespace scriptlang.tests
         public void Indexers()
         {           
             Test("l = [1,2]; l[1]", 2.0);
-            Test("l = [1,'hello, world']; l[1]", "hello, world");
+            //Test("l = [1,'hello, world']; l[1]", "hello, world");
+            //TestThrows<RuntimeException>("l = [1,2]; l[2]");
+			//Test("x = { [1,2] }; x()[0]", 1.0);
+        }
+
+		[TestMethod]
+        public void Indexers_Errors()
+        {           
             TestThrows<RuntimeException>("l = [1,2]; l[2]");
-			Test("x = { [1,2] }; x()[0]", 1.0);
+			TestThrows<RuntimeException>("l = [1,2]; l[-1]");
         }
 
         [TestMethod]
