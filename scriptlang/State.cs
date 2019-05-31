@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace scriptlang
 {
@@ -39,6 +40,11 @@ namespace scriptlang
 			SetObject(name, new Function(func));
 		}
 
+		public void Add(string name, Func<State, object[], Task<object>> func)
+		{
+			SetObject(name, new Function(func));
+		}
+
 		void AssertArgCount(object[] args, int count, string functionName)
 		{
 			if (args.Length != count)
@@ -52,7 +58,7 @@ namespace scriptlang
 			_const.Add(name);
 		}
 
-		public object Set(object[] args)
+		public async Task<object> Set(object[] args)
 		{
 			string varName;
 			if (args[0] is string str)
@@ -76,12 +82,12 @@ namespace scriptlang
 				throw new RuntimeException($"Cannot assign to const variable {varName}");
 			}
 
-			var newValue = ((Function)args[1]).Invoke(this, null);
+			var newValue = await ((Function)args[1]).InvokeAsync(this, null);
 			if (newValue is Function sf)
 			{
-				newValue = new Function((st, lambdaArgs) =>
+				newValue = new Function(async (st, lambdaArgs) =>
 				{
-					return InvokeWithStack(sf, lambdaArgs);
+					return await InvokeWithStackAsync(sf, lambdaArgs);
 				});
 			}
 
@@ -94,24 +100,24 @@ namespace scriptlang
 			return value;
 		}
 
-		public object Set(string name, Function function)
+		public async Task<object> SetAsync(string name, Function function)
 		{
-			var value = function.Invoke(this, null);
+			var value = function.AsyncFunction ? await function.InvokeAsync(this, null) : function.Invoke(this, null);
 
 			if (value is Function f)
 			{
 				if (f.FunctionType == FunctionType.Lambda) 
-					value = StackWrap(f);
+					value = StackWrapAsync(f);
 			}
 
 			Functions[StackDepth][name] = value;
 			return value;
 		}
 
-		public object SetValue(List<string> parts, Function value)
+		public async Task<object> SetValueAsync(List<string> parts, Function value)
 		{
 			if (parts.Count == 1)
-				return Set(parts[0], value);
+				return await SetAsync(parts[0], value);
 
 			var (current, found) = Resolve(parts[0]);
 			if (!found)
@@ -122,8 +128,10 @@ namespace scriptlang
 			for (var i = 1; i < parts.Count; i++)
 			{
 				var p = parts[i];
-				if (i == parts.Count - 1)
-					return SetObjectProperty(current, p, value.Invoke(this, null));
+				if (i == parts.Count - 1) {
+					var v = value.AsyncFunction ? await value.InvokeAsync(this, null) : value.Invoke(this, null);
+					return SetObjectProperty(current, p, v);
+				}
 				current = GetObjectProperty(current, p);
 			}
 			throw new RuntimeException("SetValue failed");
@@ -182,26 +190,38 @@ namespace scriptlang
 			throw new RuntimeException("TODO: cant get property");
 		}
 
-		public object InvokeWithStack(Function sf, object[] args)
+		public async Task<object> InvokeWithStackAsync(Function sf, object[] args)
 		{
 			_args.Push(args);
 			StackDepth++;
 			Functions.Add(new Dictionary<string, object>());
-			var result = sf.Invoke(this, args);
+			var result = await sf.InvokeAsync(this, args);
 			_args.Pop();
 			Functions.RemoveAt(StackDepth);
 			StackDepth--;
 			return result;
 		}
 
-		public object StackWrap(Function sf)
+		// public asobject InvokeWithStack(Function sf, object[] args)
+		// {
+		// 	_args.Push(args);
+		// 	StackDepth++;
+		// 	Functions.Add(new Dictionary<string, object>());
+		// 	var result = await sf.InvokeAsync(this, args);
+		// 	_args.Pop();
+		// 	Functions.RemoveAt(StackDepth);
+		// 	StackDepth--;
+		// 	return result;
+		// }
+
+		public object StackWrapAsync(Function sf)
 		{
-			return new Function((_, a) =>
+			return new Function(async (_, a) =>
 			{
 				_args.Push(a);
 				StackDepth++;
 				Functions.Add(new Dictionary<string, object>());
-				var result = sf.Invoke(this, a);
+				var result = await sf.InvokeAsync(this, a);
 				_args.Pop();
 				Functions.RemoveAt(StackDepth);
 				StackDepth--;

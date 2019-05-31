@@ -2,5 +2,7 @@ y = list.new(1, 2);
 //list.push(y, 1, 2, 3, -10, -9); 
 list.length(y)
 
-list.length(new())
+y = {
+
+}
 

@@ -22,7 +22,7 @@ namespace scriptlang
 		public string SymbolName { get; set; }
 		public Func<State, object[], object> Invoke { get; private set; }
 		public FunctionType FunctionType { get; set; }
-		public Func<Task<object>> InvokeAsync { get; }
+		public Func<State, object[], Task<object>> InvokeAsync { get; }
 		public bool AsyncFunction { get; }
 
 		public void Chain(object[] args)
@@ -43,9 +43,10 @@ namespace scriptlang
 			AsyncFunction = false;
 		}
 
-		public Function(Func<Task<object>> func)
+		public Function(Func<State, object[], Task<object>> asyncFunc, FunctionType name = FunctionType.Unknown)
 		{
-			InvokeAsync = func;
+			InvokeAsync = asyncFunc;
+			FunctionType = name;			
 			AsyncFunction = true;
 		}
 	}

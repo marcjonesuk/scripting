@@ -45,6 +45,7 @@ namespace scriptlang.tests
 			Test("if('false', true, false)", true);
 		}
 
+		[TestMethod]
 		public void If_Is_Const()
 		{
 			TestThrows<RuntimeException>("if = null");

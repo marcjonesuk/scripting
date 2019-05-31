@@ -27,7 +27,7 @@ namespace scriptlang
 
 		public static void Bootstrap(State current)
 		{
-			current.Add("args", (state, args) =>
+			current.Add("args", async (state, args) =>
 			{
 				var currentArgs = state.Args();
 				if (args.Length == 0)
@@ -71,11 +71,11 @@ namespace scriptlang
 				// return Global[variableName];
 			});
 
-			current.MakeConst("set");
-			current.Add("set", (state, args) =>
-			{
-				return state.Set(args);
-			});
+			// current.MakeConst("set");
+			// current.Add("set", (state, args) =>
+			// {
+			// 	return state.Set(args);
+			// });
 
 			current.MakeConst("throw");
 			current.Add("throw", (state, args) =>
@@ -113,13 +113,13 @@ namespace scriptlang
 				return (dynamic)args[0] + (dynamic)args[1];
 			});
 
-			current.Add("loop", (state, args) =>
+			current.Add("loop", async (state, args) =>
 			{
 				var top = Convert.ToInt64(args[0]);
 				var func = args[1] as Function;
 				object result = null;
 				for(var i = 0; i < top; i++) {
-					result = func.Invoke(state, null);
+					result = await func.InvokeAsync(state, null);
 				}
 				return result;
 			});
@@ -132,6 +132,8 @@ namespace scriptlang
 					return l.Count;
 				if (args[0] is ICollection c)
 					return c.Count;
+				if (args[0] is IDictionary d)
+					return d.Keys.Count;
 
 				throw new RuntimeException($"Cannot use len function on type {args[0].GetType()}");
 			});
@@ -146,7 +148,7 @@ namespace scriptlang
 				throw new RuntimeException($"Cannot use len function on type {args[0].GetType()}");
 			});
 
-			current.Add("inc", (state, args) =>
+			current.Add("inc", async (state, args) =>
 			{
 				// todo handle local state
 				// AssertArgCount(args, 1, "inc");
@@ -161,7 +163,7 @@ namespace scriptlang
 				return null;
 			});
 
-			current.Add("dec", (state, args) =>
+			current.Add("dec", async (state, args) =>
 			{
 				// AssertArgCount(args, 1, "inc");
 				// var s = args[0] as ScriptFunction;
@@ -189,13 +191,13 @@ namespace scriptlang
 			});
 
 			current.MakeConst("if");
-			current.Add("if", (state, args) =>
+			current.Add("if", async (state, args) =>
 			{
 				if (State.Truthy(args[0]))
 				{
 					if (args[1] is Function s)
 					{
-						return s.Invoke(state, null);
+						return await s.InvokeAsync(state, null);
 					}
 					else
 					{
@@ -208,7 +210,7 @@ namespace scriptlang
 					{
 						if (args[2] is Function s)
 						{
-							return s.Invoke(state, null);
+							return await s.InvokeAsync(state, null);
 						}
 						else
 						{
@@ -231,7 +233,7 @@ namespace scriptlang
 			});
 
 			current.MakeConst("try");
-			current.Add("try", (state, args) =>
+			current.Add("try", async (state, args) =>
 			{
 				if (args.Length == 0)
 				{
@@ -241,7 +243,7 @@ namespace scriptlang
 				{
 					if (args[0] is Function t)
 					{
-						state.InvokeWithStack(t, null);
+						await state.InvokeWithStackAsync(t, null);
 					}
 					return null;
 				}
@@ -251,7 +253,7 @@ namespace scriptlang
 					{
 						if (args[1] is Function c)
 						{
-							return state.InvokeWithStack(c, new object[] { ex.Message });
+							return await state.InvokeWithStackAsync(c, new object[] { ex.Message });
 						}
 					}
 					return ex;

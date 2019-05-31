@@ -182,11 +182,11 @@ namespace scriptlang.tests
 			Test("v = 'test'; f = { v = 'hello, world' { v = 'yoyoyo' } }; y = f()(); v", "test");
 		}
 
-		[TestMethod]
-        public void TypedVariables()
-        {
-			TestThrows<RuntimeException>("double x = 5.0; x = 'hello, world'");
-		}
+		// [TestMethod]
+        // public void TypedVariables()
+        // {
+		// 	TestThrows<RuntimeException>("double x = 5.0; x = 'hello, world'");
+		// }
 
         [TestMethod]
         public void Arguments()

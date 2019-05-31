@@ -2,6 +2,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace scriptlang
 {
@@ -45,7 +47,7 @@ namespace scriptlang
 			var stringConstant = en.Current.ToString();
 			en.MoveNext();
 
-			return (new Function((state, _) => stringConstant, FunctionType.StringConst), !en.MoveNext());
+			return (new Function((state, _) => Task.FromResult<object>(stringConstant), FunctionType.StringConst), !en.MoveNext());
 		}
 
 		public static (Function, bool) CompileNumber(IEnumerator<Token> en)
@@ -59,22 +61,31 @@ namespace scriptlang
 			return (new Function((state, _) => result, FunctionType.NumberConst), !en.MoveNext());
 		}
 
-		public static Func<object> Compile(State state, IEnumerable<Token> tokens)
+		public static Func<Task<object>> Compile(State state, IEnumerable<Token> tokens)
 		{
 			var en = tokens.GetEnumerator();
 			var (functions, eof) = Compiler.CompileStatements(en, false);
-			return () =>
+			return async () =>
 			{
 				object result = null;
 				foreach (var ix in functions)
 				{
-					result = ix.Invoke(state, null);
+					result = ix.AsyncFunction ? await ix.InvokeAsync(state, null) : ix.Invoke(state, null);
 				}
 				return result;
 			};
 		}
 
 		public static Func<object> Compile(IEnumerable<Token> tokens)
+		{
+			var state = new State();
+			StandardLibrary.Bootstrap(state);
+			ListFunctions.Bootstrap(state);
+			MathFunctions.Bootstrap(state);
+			return () => Compile(state, tokens)().Result; //rewrite this, very slow
+		}
+
+		public static Func<Task<object>> CompileAsync(IEnumerable<Token> tokens)
 		{
 			var state = new State();
 			StandardLibrary.Bootstrap(state);
@@ -92,9 +103,6 @@ namespace scriptlang
 					return CompileList(en);
 				case "{":
 					return CompileLambda(en);
-				case "@":
-					return CompileSymbolReference(en);
-				// case "\"":
 				case "'":
 					return CompileString(en);
 				default:
@@ -119,17 +127,17 @@ namespace scriptlang
              * Creating a function that evaluates every function sequentially, and
              * returns the result of the last function evaluation to the caller.
              */
-			var function = new Function((state, _) =>
+			var function = new Function(async (state, _) =>
 			{
 				object result = null;
 				foreach (var ix in functions)
 				{
-					result = ix.Invoke(state, null);
+					result = ix.AsyncFunction ? await ix.InvokeAsync(state, null) : ix.Invoke(state, null);
 				}
 				return result;
 			}, FunctionType.Lambda);
 
-			var lazyFunction = new Function((state, _) => function, FunctionType.Lazy);
+			var lazyFunction = new Function((state, _) => Task.FromResult<object>(function), FunctionType.Lazy);
 			return (lazyFunction, eof || !en.MoveNext());
 		}
 
@@ -192,12 +200,13 @@ namespace scriptlang
 				if (!en.MoveNext())
 					throw new CompilerException("Unexpected EOF while parsing list.");
 			}
-			return (new Function((state, _) =>
+			return (new Function(async (state, _) =>
 			{
 				var list = new List<object>();
 				foreach (var ix in items)
 				{
-					list.Add(ix.Invoke(state, null));
+					var item = ix.AsyncFunction ? await ix.InvokeAsync(state, null) : ix.Invoke(state, null);
+					list.Add(item);
 				}
 				return list;
 			}, FunctionType.ListConst), !en.MoveNext());
@@ -222,19 +231,21 @@ namespace scriptlang
 					break; // And we are done parsing arguments.
 			}
 
-			return (new Function((state, _) =>
+			return (new Function(async (state, _) =>
 			{
 				var args = new object[arguments.Count];
 				for (var a = 0; a < arguments.Count; a++)
 				{
-					var value = arguments[a].Invoke(state, null);
+					var value = arguments[a].AsyncFunction ? await arguments[a].InvokeAsync(state, null) : arguments[a].InvokeAsync(state, null);
 					args[a] = value;
 				}
 
-				var result = sf.Invoke(state, null);
+				var result = await sf.InvokeAsync(state, null);
 				if (result is Function c)
 				{
-					return state.InvokeWithStack(sf, args);
+					//if (sf.AsyncFunction)
+					return await state.InvokeWithStackAsync(sf, args);
+					//return state.InvokeWithStack(sf, args);
 				}
 				throw new RuntimeException("Unable to invoke result");
 
@@ -265,7 +276,7 @@ namespace scriptlang
 			// Checking if this is a function invocation.
 			if (!eof && en.Current.ToString() == "(")
 			{
-				if (parts[0] == "list" || parts[0] == "math"|| parts[0] == "stopwatch")
+				if (parts[0] == "list" || parts[0] == "math" || parts[0] == "stopwatch")
 					symbolName = parts[0] + "." + parts[1];
 				// Function invocation, making sure we apply arguments,
 				//return ApplyArguments<TContext>(symbolName, en);
@@ -307,7 +318,7 @@ namespace scriptlang
 				// Variable assignment
 				en.MoveNext();
 				var (value, neof) = CompileStatement(en);
-				return (new Function((state, _) => state.SetValue(parts, value), FunctionType.Assignment)
+				return (new Function(async (state, _) => await state.SetValueAsync(parts, value), FunctionType.Assignment)
 				{ SymbolName = symbolName }, neof);
 			}
 			else
@@ -320,7 +331,7 @@ namespace scriptlang
 				{
 					throw new CompilerException("if function does not have any arguments. Example: if({ ... }, /* else */ { ... })");
 				}
-				return (new Function((state, _) => state.GetValue(parts), FunctionType.Getter)
+				return (new Function((state, _) => Task.FromResult<object>(state.GetValue(parts)), FunctionType.Getter)
 				{ SymbolName = symbolName }, eof);
 			}
 		}
@@ -353,14 +364,15 @@ namespace scriptlang
 					throw new CompilerException("Unexpected EOF while parsing arguments to function invocation.");
 			}
 
-			return (new Function((state, _) =>
+			return (new Function(async (state, _) =>
 			{
 				var args = new object[arguments.Count];
 				for (var a = 0; a < arguments.Count; a++)
 				{
 					if (symbolName != "var" && symbolName != "const" && symbolName != "set" && symbolName != "inc" && symbolName != "dec")
 					{
-						var value = arguments[a].Invoke(state, null);
+						var function = arguments[a];
+						var value = function.AsyncFunction ? await function.InvokeAsync(state, null) : function.Invoke(state, null);
 						args[a] = value;
 					}
 					else
@@ -372,53 +384,10 @@ namespace scriptlang
 				if (!found)
 					throw new RuntimeException($"Cannot resolve symbol {symbolName}");
 
-				return ((Function)func).Invoke(state, args);
+				var f = func as Function;
+				return f.AsyncFunction ? await f.InvokeAsync(state, args) : f.Invoke(state, args);
 			}, FunctionType.InvocationWithArgs), !en.MoveNext());
 		}
 
-		static (Function, bool) CompileSymbolReference(IEnumerator<Token> en)
-		{
-			// Sanity checking tokenizer's content, since an '@' must reference an actual symbol.
-			if (!en.MoveNext())
-				throw new CompilerException("Unexpected EOF after '@'.");
-
-			// Storing symbol's name and sanity checking its name.
-			var symbolName = en.Current;
-
-			// Sanity checking symbol name.
-			//SanityCheckSymbolName(symbolName);
-
-			// Discarding "(" token and checking if we're at EOF.
-			var eof = !en.MoveNext();
-
-			// Checking if this is a function invocation.
-			if (!eof && en.Current == "(")
-			{
-				/*
-                 * Notice, since this is a literally referenced function invocation, we
-                 * don't want to apply its arguments if the function is being passed around,
-                 * but rather return the function as a function, which once evaluated, applies
-                 * its arguments. Hence, this becomes a "lazy function evaluation", allowing us
-                 * to pass in a function evaluation, that is not evaluated before the caller
-                 * explicitly evaluates the function wrapping our "inner function".
-                 */
-				var (func, neof) = ApplyArguments(symbolName, en);
-
-				// return new Tuple<object, bool>(new Function<TContext>((ctx, binder, arguments) =>
-				// {
-				// 	return functor;
-				// }), tuple.Item2);
-				return (new Function((state, _) => func), neof);
-			}
-			else
-			{
-				/*
-                 * Creating a function that evaluates to the constant value of the symbol's name.
-                 * When you use the '@' character with a symbol, this implies simply returning the
-                 * symbol's name.
-                 */
-				return (new Function((state, _) => symbolName), eof);
-			}
-		}
 	}
 }
