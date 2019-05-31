@@ -25,17 +25,6 @@ namespace scriptlang
 		public Func<State, object[], Task<object>> InvokeAsync { get; }
 		public bool AsyncFunction { get; }
 
-		public void Chain(object[] args)
-		{
-			// var f = Invoke;
-			// Invoke = _ =>
-			// {
-			// 	var result = f(_);
-			// 	var s = result as Function;
-			// 	return s.Invoke(args);
-			// };
-		}
-
 		public Function(Func<State, object[], object> func, FunctionType name = FunctionType.Unknown)
 		{
 			Invoke = func;

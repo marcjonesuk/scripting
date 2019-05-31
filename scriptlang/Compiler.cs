@@ -29,12 +29,54 @@ namespace scriptlang
 			System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
 	}
 
+	public class TokenEnumerator : IEnumerator<Token>
+	{
+		private IEnumerator<Token> _wrapped;
+		private List<Token> _tokens = new List<Token>();
+
+		public Token Current => _wrapped.Current;
+
+		object IEnumerator.Current => _wrapped.Current;
+
+		public TokenEnumerator(IEnumerator<Token> wrapped)
+		{
+			_wrapped = wrapped;
+		}
+
+		public void FlushTokens()
+		{
+			_tokens.Clear();
+		}
+
+		public List<Token> Tokens()
+		{
+			return new List<Token>(_tokens);
+		}
+
+		public void Dispose()
+		{
+			_wrapped.Dispose();
+		}
+
+		public bool MoveNext()
+		{
+			var next = _wrapped.MoveNext();
+			_tokens.Add(Current);
+			return next;
+		}
+
+		public void Reset()
+		{
+			_wrapped.Reset();
+		}
+	}
+
 	public class Compiler
 	{
 		/*
          * Compiles a constant string down to a symbol and returns to caller.
          */
-		static (Function, bool) CompileString(IEnumerator<Token> en)
+		static (Function, bool) CompileString(TokenEnumerator en)
 		{
 			// Storing type of string literal quote.
 			var quote = en.Current;
@@ -50,7 +92,7 @@ namespace scriptlang
 			return (new Function((state, _) => Task.FromResult<object>(stringConstant), FunctionType.StringConst), !en.MoveNext());
 		}
 
-		public static (Function, bool) CompileNumber(IEnumerator<Token> en)
+		public static (Function, bool) CompileNumber(TokenEnumerator en)
 		{
 			var success = double.TryParse(en.Current.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out double dblResult);
 			if (!success)
@@ -63,7 +105,7 @@ namespace scriptlang
 
 		public static Func<Task<object>> Compile(State state, IEnumerable<Token> tokens)
 		{
-			var en = tokens.GetEnumerator();
+			var en = new TokenEnumerator(tokens.GetEnumerator());
 			var (functions, eof) = Compiler.CompileStatements(en, false);
 			return async () =>
 			{
@@ -94,9 +136,10 @@ namespace scriptlang
 			return Compile(state, tokens);
 		}
 
-		static (Function, bool) CompileStatement(IEnumerator<Token> en)
+		static (Function, bool) CompileStatement(TokenEnumerator en)
 		{
 			// Checking type of token, and acting accordingly.
+
 			switch (en.Current.ToString())
 			{
 				case "[":
@@ -118,7 +161,7 @@ namespace scriptlang
 		/*
          * Compiles a lambda down to a function and returns the function to caller.
          */
-		static (Function, bool) CompileLambda(IEnumerator<Token> en)
+		static (Function, bool) CompileLambda(TokenEnumerator en)
 		{
 			// Compiling body, and retrieving functions.
 			var (functions, eof) = CompileStatements(en);
@@ -148,7 +191,7 @@ namespace scriptlang
          * If "forceClose" is true, it will expect a brace '}' to end the lambda segment,
          * and throw an exception if it finds EOF before it finds the closing '}'.
          */
-		static (List<Function>, bool) CompileStatements(IEnumerator<Token> en, bool forceClose = true)
+		static (List<Function>, bool) CompileStatements(TokenEnumerator en, bool forceClose = true)
 		{
 			// Creating a list of functions and returning these to caller.
 			var functions = new List<Function>();
@@ -177,7 +220,7 @@ namespace scriptlang
 		}
 
 
-		static (Function, bool) CompileList(IEnumerator<Token> en)
+		static (Function, bool) CompileList(TokenEnumerator en)
 		{
 			var items = new List<Function>();
 
@@ -212,7 +255,7 @@ namespace scriptlang
 			}, FunctionType.ListConst), !en.MoveNext());
 		}
 
-		static (Function, bool) CompileChainedCall(IEnumerator<Token> en, Function sf)
+		static (Function, bool) CompileChainedCall(TokenEnumerator en, Function sf)
 		{
 			// Used to hold arguments before they're being applied inside of function evaluation.
 			var arguments = new List<Function>();
@@ -252,15 +295,61 @@ namespace scriptlang
 			}, FunctionType.Lambda), !en.MoveNext());
 		}
 
+		static (Function, bool) CompileIf(TokenEnumerator en)
+		{
+			var eof = !en.MoveNext();
+			if (en.Current != "(")
+				throw new CompilerException("If statement expected (");
+			eof = !en.MoveNext();
+			var (condition, eof_) = CompileStatement(en);
+
+			if (en.Current != ")")
+				throw new CompilerException("If statement expected )");
+
+			eof = !en.MoveNext();
+			Function ifLambda = null;
+			(ifLambda, eof) = CompileStatement(en);
+
+			Function elseLambda = null;
+			if (en.Current == "else")
+			{
+				eof = !en.MoveNext();
+				(elseLambda, eof) = CompileStatement(en);
+			}
+
+			return (new Function(async (state, args) =>
+			{
+				object ifResult = null;
+				var condResult = condition.AsyncFunction ? await condition.InvokeAsync(state, args) : condition.Invoke(state, args);
+				if (State.Truthy(condResult))
+				{
+					var l = (ifLambda.AsyncFunction ? await ifLambda.InvokeAsync(state, args) : ifLambda.Invoke(state, args)) as Function;
+					ifResult = (l.AsyncFunction ? await l.InvokeAsync(state, args) : l.Invoke(state, args));
+				}
+				else
+				{
+					if (elseLambda != null)
+					{
+						var l = (elseLambda.AsyncFunction ? await elseLambda.InvokeAsync(state, args) : elseLambda.Invoke(state, args)) as Function;
+						ifResult = (l.AsyncFunction ? await l.InvokeAsync(state, args) : l.Invoke(state, args));
+					}
+				}
+				return ifResult;
+			}), eof);
+		}
+
 		/*
          * Compiles a symbolic reference down to a function invocation and returns
          * that function to caller.
          */
-		static (Function, bool) CompileSymbol(IEnumerator<Token> en)
+		static (Function, bool) CompileSymbol(TokenEnumerator en)
 		{
 			// Retrieving symbol's name and sanity checking it.
 			var symbolName = en.Current.ToString();
 			//SanityCheckSymbolName(symbolName);
+
+			if (symbolName == "if")
+				return CompileIf(en);
 
 			// Discarding "(" token and checking if we're at EOF.
 			var eof = !en.MoveNext();
@@ -327,10 +416,6 @@ namespace scriptlang
 				{
 					throw new CompilerException("try function does not have any arguments. Example: try({ ... }, /* catch */ { ... })");
 				}
-				if (symbolName == "if")
-				{
-					throw new CompilerException("if function does not have any arguments. Example: if({ ... }, /* else */ { ... })");
-				}
 				return (new Function((state, _) => Task.FromResult<object>(state.GetValue(parts)), FunctionType.Getter)
 				{ SymbolName = symbolName }, eof);
 			}
@@ -339,7 +424,7 @@ namespace scriptlang
 		/*
          * Applies arguments to a function invoction, such that they're evaluated at runtime.
          */
-		static (Function, bool) ApplyArguments(string symbolName, IEnumerator<Token> en)
+		static (Function, bool) ApplyArguments(string symbolName, TokenEnumerator en)
 		{
 			// Used to hold arguments before they're being applied inside of function evaluation.
 			var arguments = new List<Function>();

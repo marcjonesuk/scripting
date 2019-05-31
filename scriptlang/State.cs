@@ -1,11 +1,15 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace scriptlang
 {
 	public class State
 	{
+		public const bool Debug = true;
+		static AsyncLocal<string> _asyncLocalString = new AsyncLocal<string>();
+
 		private Stack<object[]> _args = new Stack<object[]>();
 		private int StackDepth = 0;
 		private List<Dictionary<string, object>> Functions = new List<Dictionary<string, object>>();
@@ -37,7 +41,16 @@ namespace scriptlang
 
 		public void Add(string name, Func<State, object[], object> func)
 		{
-			SetObject(name, new Function(func));
+			if (!Debug)
+			{
+				SetObject(name, new Function(func));
+				return;
+			}
+			SetObject(name, new Function((s, a) =>
+			{
+				_asyncLocalString.Value = name;
+				return func(s, a);
+			}));
 		}
 
 		public void Add(string name, Func<State, object[], Task<object>> func)
@@ -106,7 +119,7 @@ namespace scriptlang
 
 			if (value is Function f)
 			{
-				if (f.FunctionType == FunctionType.Lambda) 
+				if (f.FunctionType == FunctionType.Lambda)
 					value = StackWrapAsync(f);
 			}
 
@@ -128,7 +141,8 @@ namespace scriptlang
 			for (var i = 1; i < parts.Count; i++)
 			{
 				var p = parts[i];
-				if (i == parts.Count - 1) {
+				if (i == parts.Count - 1)
+				{
 					var v = value.AsyncFunction ? await value.InvokeAsync(this, null) : value.Invoke(this, null);
 					return SetObjectProperty(current, p, v);
 				}

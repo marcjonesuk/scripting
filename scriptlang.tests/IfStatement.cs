@@ -11,12 +11,19 @@ namespace scriptlang.tests
 		[TestMethod]
 		public void If_Else_Simple()
 		{
-			Test("if(true, true, false)", true);
-			Test("if(false, true, false)", false);
-			Test("if(true, 'true', 'false')", "true");
-			Test("if(false, 'true', 'false')", "false");	
-			Test("x = false; if(true, { x = true }); x", true);
-			Test("x = false; if(false, { x = true }); x", false);	
+			Test("if(true) { true } else { false }", true);
+			Test("if(false) { true } else { false }", false);
+			Test("if(true) { 'true' } else { 'false' }", "true");
+			Test("if(false) { 'true' } else { 'false' }", "false");	
+			Test("x = false; if(true) { x = true }; x", true);
+			Test("x = false; if(false) { x = true }; x", false);	
+		}
+
+		[TestMethod]
+		public void If_Else_New_Style()
+		{
+			//Test("x = 'false'; if(true) { x = 'true' }; x", "true");
+			Test("x = 'false'; if(true) { x = 'true' } else {  }; x", "true");
 		}
 
 		[TestMethod]
@@ -28,21 +35,21 @@ namespace scriptlang.tests
 		[TestMethod]
 		public void If_Lambda()
 		{
-			Test("y = { 'true' }; if(true, y())", "true");	
-			Test("x = { 'false' }; y = { 'true' }; if(false, x(), y())", "true");	
-			Test("x = false; if(true, { x = true }); x", true);
-			Test("y = { true }; if(y(), 'true', 'false')", "true");	
+			Test("y = { 'true' }; if(true) { y() }", "true");	
+			Test("x = { 'false' }; y = { 'true' }; if(false) { x() } else { y() }", "true");
+			Test("x = false; if(true) { x = true }; x", true);
+			Test("y = { true }; if(y()) { 'true' } else { 'false' }", "true");	
 		}
 
 		[TestMethod]
 		public void Truthy()
 		{
-			Test("if(null, true, false)", false);
-			Test("if(0, true, false)", true);
-			Test("if(-1, true, false)", true);
-			Test("if(new(), true, false)", true);
-			Test("if('true', true, false)", true);
-			Test("if('false', true, false)", true);
+			Test("if(null) { true } else { false }", false);
+			//Test("if(0) true else false", true);
+			// Test("if(-1, true, false)", true);
+			// Test("if(new(), true, false)", true);
+			// Test("if('true', true, false)", true);
+			// Test("if('false', true, false)", true);
 		}
 
 		[TestMethod]

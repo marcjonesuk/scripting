@@ -6,7 +6,7 @@ using Newtonsoft.Json;
 
 namespace scriptlang
 {
-	public class StandardLibrary
+	public class StandardLibrary : ArgsHelper
 	{
 		public static bool Equal(object[] args)
 		{
@@ -126,6 +126,9 @@ namespace scriptlang
 
 			current.Add("len", (state, args) =>
 			{
+				
+				ExpectOneArg("len", args);
+				//switch(args[0])
 				if (args[0] is string s)
 					return s.Length;
 				if (args[0] is IList l)
@@ -148,10 +151,10 @@ namespace scriptlang
 				throw new RuntimeException($"Cannot use len function on type {args[0].GetType()}");
 			});
 
-			current.Add("inc", async (state, args) =>
-			{
-				// todo handle local state
-				// AssertArgCount(args, 1, "inc");
+			// current.Add("inc", async (state, args) =>
+			// {
+				//todo handle local state
+				//ExpectOneArg("inc", args);
 				// var s = args[0] as ScriptFunction;
 				// dynamic value = s.Invoke();
 				// value++;
@@ -159,9 +162,9 @@ namespace scriptlang
 				// {
 				//     Global[s.SymbolName] = value;
 				// }
-				//return value;
-				return null;
-			});
+				// return value;
+				// return null;
+			// });
 
 			current.Add("dec", async (state, args) =>
 			{
