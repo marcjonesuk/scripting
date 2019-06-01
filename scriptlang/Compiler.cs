@@ -360,6 +360,8 @@ namespace scriptlang
 			var symbolName = en.Current.ToString();
 			//SanityCheckSymbolName(symbolName);
 
+			
+
 			if (symbolName == "if")
 				return CompileIf(en);
 
@@ -424,14 +426,16 @@ namespace scriptlang
 			}
 			else
 			{
-				if (symbolName == "false")
-					return (new Function((state, _) => false), eof);
+				// Avoid dictionary lookup
+				if (symbolName == "true") return (new Function((state, _) => true), eof);
+				if (symbolName == "false") return (new Function((state, _) => false), eof);
+				if (symbolName == "null") return (new Function((state, _) => null), eof);
 
 				if (symbolName == "try")
 				{
 					throw new CompilerException("try function does not have any arguments. Example: try({ ... }, /* catch */ { ... })");
 				}
-				return (new Function((state, _) => Task.FromResult<object>(state.GetValue(parts)), FunctionType.Getter)
+				return (new Function((state, _) => state.GetValue(parts), FunctionType.Getter)
 				{ SymbolName = symbolName }, eof);
 			}
 		}

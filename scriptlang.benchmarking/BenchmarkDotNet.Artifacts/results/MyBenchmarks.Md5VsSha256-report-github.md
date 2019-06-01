@@ -11,4 +11,4 @@ Job=Core  Runtime=Core
 ```
 |      Method |     Mean |    Error |   StdDev | Rank |
 |------------ |---------:|---------:|---------:|-----:|
-| IfStatement | 227.1 ns | 4.504 ns | 6.603 ns |    1 |
+| IfStatement | 168.6 ns | 3.687 ns | 4.663 ns |    1 |

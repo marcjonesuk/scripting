@@ -120,8 +120,7 @@ namespace scriptlang.tests
 		[TestMethod]
         public void Other_Assignments()
         {
-        	Test("if(true, { x = 10.1 }); x", 10.1);
-            Test("if(true, { x = 10.2 }); x", 10.2);
+        	Test("if(true) { x = 10.1 }; x", 10.1);
             Test("y = { x = 10.2; true }; not(y())", false);
         }
 
@@ -172,14 +171,15 @@ namespace scriptlang.tests
             // Test("x = 'hello'; '{x}, world'", "hello, world");
 
 			// function variable scope
-			Test("v = 'test'; f = { v = 'hello, world' }; f(); v", "test");
+			//Test("v = 'test'; f = { v = 'hello, world' }; f(); v", "test");
         }
 
  		[TestMethod]
         public void Scope()
         {     
-			Test("v = 'test'; f = { v = 'hello, world' }; f(); v", "test");
-			Test("v = 'test'; f = { v = 'hello, world' { v = 'yoyoyo' } }; y = f()(); v", "test");
+			Test("v = 'outside'; f = { v = 'inside' }; v", "outside");
+			Test("v = 'outside'; f = { v = 'inside' }; f(); v", "inside");
+			// Test("v = 'test'; f = { v = 'hello, world' { v = 'yoyoyo' } }; y = f()(); v", "test");
 		}
 
 		// [TestMethod]
