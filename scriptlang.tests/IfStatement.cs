@@ -40,10 +40,10 @@ namespace scriptlang.tests
 		{
 			Test("if(null) { true } else { false }", false);
 			Test("if(0) true else false", true);
-			// Test("if(-1, true, false)", true);
-			// Test("if(new(), true, false)", true);
-			// Test("if('true', true, false)", true);
-			// Test("if('false', true, false)", true);
+			Test("if(-1) true else false", true);
+			Test("if(new()) true else false", true);
+			Test("if('true') true else false", true);
+			Test("if('false') true else false", true);
 		}
 
 		[TestMethod]

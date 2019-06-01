@@ -9,6 +9,8 @@ Intel Core i7-4770HQ CPU 2.20GHz (Haswell), 1 CPU, 8 logical and 4 physical core
 Job=Core  Runtime=Core  
 
 ```
-|      Method |     Mean |    Error |   StdDev | Rank |
-|------------ |---------:|---------:|---------:|-----:|
-| IfStatement | 168.6 ns | 3.687 ns | 4.663 ns |    1 |
+|      Method |      Mean |      Error |     StdDev |
+|------------ |----------:|-----------:|-----------:|
+| IfStatement | 162.41 ns |  3.2742 ns |  6.1498 ns |
+|    Constant |  75.30 ns |  0.8511 ns |  0.7545 ns |
+|       Lists | 878.50 ns | 12.6284 ns | 11.1947 ns |

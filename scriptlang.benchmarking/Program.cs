@@ -8,14 +8,8 @@ using scriptlang;
 namespace MyBenchmarks
 {
     [CoreJob]
-    [RPlotExporter, RankColumn]
-    public class Md5VsSha256
+    public class Benchmarks
     {
-        private SHA256 sha256 = SHA256.Create();
-        private MD5 md5 = MD5.Create();
-        private byte[] data;
-
-
 		private Func<Task<object>> ifStatement;
 		private Func<Task<object>> constant;
 		private Func<Task<object>> lists;
@@ -35,24 +29,24 @@ namespace MyBenchmarks
 			var t = ifStatement().Result;
 		}
 
-        // [Benchmark]
-        // public void Constant() 
-		// {
-		// 	var t = constant().Result;
-		// }
+        [Benchmark]
+        public void Constant() 
+		{
+			var t = constant().Result;
+		}
 		
-		// [Benchmark]
-        // public void Lists() 
-		// {
-		// 	var t = lists().Result;
-		// }
+		[Benchmark]
+        public void Lists() 
+		{
+			var t = lists().Result;
+		}
     }
 
     public class Program
     {
         public static void Main(string[] args)
         {
-            var summary = BenchmarkRunner.Run<Md5VsSha256>();
+            var summary = BenchmarkRunner.Run<Benchmarks>();
         }
     }
 }

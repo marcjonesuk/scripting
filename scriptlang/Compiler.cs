@@ -148,6 +148,12 @@ namespace scriptlang
 					return CompileLambda(en);
 				case "'":
 					return CompileString(en);
+				case "if":
+					return CompileIf(en);
+				// case "true":
+				// case "false":
+				// case "null":
+
 				default:
 					if (NumberParser.IsNumeric(en.Current.ToString()))
 						return CompileNumber(en);
@@ -227,7 +233,6 @@ namespace scriptlang
 
 			return (functions, eof);
 		}
-
 
 		static (Function, bool) CompileList(TokenEnumerator en)
 		{
@@ -360,11 +365,6 @@ namespace scriptlang
 			var symbolName = en.Current.ToString();
 			//SanityCheckSymbolName(symbolName);
 
-			
-
-			if (symbolName == "if")
-				return CompileIf(en);
-
 			// Discarding "(" token and checking if we're at EOF.
 			var eof = !en.MoveNext();
 			var parts = new List<string>();
@@ -429,7 +429,8 @@ namespace scriptlang
 				// Avoid dictionary lookup
 				if (symbolName == "true") return (new Function((state, _) => true), eof);
 				if (symbolName == "false") return (new Function((state, _) => false), eof);
-				if (symbolName == "null") return (new Function((state, _) => null), eof);
+				// Func casted needed here to avoid using the async Task<object> overload
+				if (symbolName == "null") return (new Function((Func<State, object[], object>)((state, _) => null)), eof);
 
 				if (symbolName == "try")
 				{
@@ -492,6 +493,5 @@ namespace scriptlang
 				return f.IsAsync ? await f.InvokeAsync(state, args) : f.Invoke(state, args);
 			}, FunctionType.InvocationWithArgs), !en.MoveNext());
 		}
-
 	}
 }

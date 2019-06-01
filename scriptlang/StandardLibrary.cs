@@ -194,36 +194,7 @@ namespace scriptlang
 			});
 
 			current.MakeConst("if");
-			current.Add("if", async (state, args) =>
-			{
-				if (State.Truthy(args[0]))
-				{
-					if (args[1] is Function s)
-					{
-						return await s.InvokeAsync(state, null);
-					}
-					else
-					{
-						return args[1];
-					}
-				}
-				else
-				{
-					if (args.Length > 2)
-					{
-						if (args[2] is Function s)
-						{
-							return await s.InvokeAsync(state, null);
-						}
-						else
-						{
-							return args[2];
-						}
-					}
-					return null;
-				}
-			});
-
+			
 			current.Add("json", (state, args) =>
 			{
 				return JsonConvert.SerializeObject(args[0]);
