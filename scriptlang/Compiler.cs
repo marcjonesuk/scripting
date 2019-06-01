@@ -89,7 +89,7 @@ namespace scriptlang
 			var stringConstant = en.Current.ToString();
 			en.MoveNext();
 
-			return (new Function((state, _) => Task.FromResult<object>(stringConstant), FunctionType.StringConst), !en.MoveNext());
+			return (new Function((state, _) => stringConstant, FunctionType.StringConst), !en.MoveNext());
 		}
 
 		public static (Function, bool) CompileNumber(TokenEnumerator en)
