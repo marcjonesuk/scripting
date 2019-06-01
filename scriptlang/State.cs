@@ -8,7 +8,6 @@ namespace scriptlang
 	public class State
 	{
 		public const bool Debug = true;
-		static AsyncLocal<string> _asyncLocalString = new AsyncLocal<string>();
 
 		private Stack<object[]> _args = new Stack<object[]>();
 		private int StackDepth = 0;
@@ -43,14 +42,22 @@ namespace scriptlang
 		{
 			if (!Debug)
 			{
-				SetObject(name, new Function(func));
-				return;
+				SetObject(name, func);
 			}
-			SetObject(name, new Function((s, a) =>
+			else
 			{
-				_asyncLocalString.Value = name;
-				return func(s, a);
-			}));
+				SetObject(name, new Function((s, a) =>
+				{
+					try
+					{
+						return func(s, a);
+					}
+					catch
+					{
+						throw;
+					}
+				}));
+			}
 		}
 
 		public void Add(string name, Func<State, object[], Task<object>> func)
@@ -115,7 +122,7 @@ namespace scriptlang
 
 		public async Task<object> SetAsync(string name, Function function)
 		{
-			var value = function.AsyncFunction ? await function.InvokeAsync(this, null) : function.Invoke(this, null);
+			var value = function.IsAsync ? await function.InvokeAsync(this, null) : function.Invoke(this, null);
 
 			if (value is Function f)
 			{
@@ -143,7 +150,7 @@ namespace scriptlang
 				var p = parts[i];
 				if (i == parts.Count - 1)
 				{
-					var v = value.AsyncFunction ? await value.InvokeAsync(this, null) : value.Invoke(this, null);
+					var v = value.IsAsync ? await value.InvokeAsync(this, null) : value.Invoke(this, null);
 					return SetObjectProperty(current, p, v);
 				}
 				current = GetObjectProperty(current, p);

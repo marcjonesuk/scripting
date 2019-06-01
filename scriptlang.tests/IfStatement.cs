@@ -20,16 +20,10 @@ namespace scriptlang.tests
 		}
 
 		[TestMethod]
-		public void If_Else_New_Style()
-		{
-			//Test("x = 'false'; if(true) { x = 'true' }; x", "true");
-			Test("x = 'false'; if(true) { x = 'true' } else {  }; x", "true");
-		}
-
-		[TestMethod]
 		public void If_Not()
 		{
-			Test("if(not(true), true, false)", false);
+			Test("if(not(false)) { true } else { false }", true);
+			Test("if(not(true)) { true } else { false }", false);
 		}
 
 		[TestMethod]
@@ -45,7 +39,7 @@ namespace scriptlang.tests
 		public void Truthy()
 		{
 			Test("if(null) { true } else { false }", false);
-			//Test("if(0) true else false", true);
+			Test("if(0) true else false", true);
 			// Test("if(-1, true, false)", true);
 			// Test("if(new(), true, false)", true);
 			// Test("if('true', true, false)", true);
@@ -55,10 +49,10 @@ namespace scriptlang.tests
 		[TestMethod]
 		public void If_Is_Const()
 		{
-			TestThrows<RuntimeException>("if = null");
-			TestThrows<RuntimeException>("if = if");
-			TestThrows<RuntimeException>("if = try");
-			TestThrows<RuntimeException>("if = false");
+			// TestThrows<RuntimeException>("if = null");
+			// TestThrows<RuntimeException>("if = if");
+			// TestThrows<RuntimeException>("if = try");
+			// TestThrows<RuntimeException>("if = false");
 		}
 
 		[TestMethod]

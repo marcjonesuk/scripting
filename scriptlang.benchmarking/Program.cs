@@ -1,24 +1,43 @@
 ﻿using System;
-using System.Diagnostics;
-using System.IO;
+using System.Security.Cryptography;
+using System.Threading.Tasks;
+using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Running;
 using scriptlang;
 
-namespace scriptlang.benchmarking
+namespace MyBenchmarks
 {
-	class Program
-	{
-		static void Main(string[] args)
-		{
-			var tokenizer = new Tokenizer(new LizzieTokenizer());
-			var func = Compiler.CompileAsync(tokenizer.Tokenize("y = list.new(1, 2); list.length(y)"));
-			var r = func().Result;
-			var sw = Stopwatch.StartNew();
-			//400ms sync 850ms with async
-			for (var i = 0; i < 1000000; i++)
-				r = func().Result;
+    [CoreJob]
+    [RPlotExporter, RankColumn]
+    public class Md5VsSha256
+    {
+        private SHA256 sha256 = SHA256.Create();
+        private MD5 md5 = MD5.Create();
+        private byte[] data;
 
-			Console.WriteLine(sw.ElapsedMilliseconds);
-			Console.WriteLine(r);
+
+		private Func<Task<object>> ifStatement;
+
+		[GlobalSetup]
+        public void Setup()
+        {
+			var tokenizer = new Tokenizer(new LizzieTokenizer());
+			ifStatement = Compiler.CompileAsync(tokenizer.Tokenize("if(0) { true }"));
+			//ifStatement = Compiler.CompileAsync(tokenizer.Tokenize("if(true) { true } else { false }"));
+        }
+
+        [Benchmark]
+        public void IfStatement() 
+		{
+			var t = ifStatement().Result;
 		}
-	}
+    }
+
+    public class Program
+    {
+        public static void Main(string[] args)
+        {
+            var summary = BenchmarkRunner.Run<Md5VsSha256>();
+        }
+    }
 }

@@ -112,7 +112,7 @@ namespace scriptlang
 				object result = null;
 				foreach (var ix in functions)
 				{
-					result = ix.AsyncFunction ? await ix.InvokeAsync(state, null) : ix.Invoke(state, null);
+					result = ix.IsAsync ? await ix.InvokeAsync(state, null) : ix.Invoke(state, null);
 				}
 				return result;
 			};
@@ -166,21 +166,30 @@ namespace scriptlang
 			// Compiling body, and retrieving functions.
 			var (functions, eof) = CompileStatements(en);
 
-			/*
-             * Creating a function that evaluates every function sequentially, and
-             * returns the result of the last function evaluation to the caller.
-             */
-			var function = new Function(async (state, _) =>
+			Function function;
+			if (functions.Count == 1)
 			{
-				object result = null;
-				foreach (var ix in functions)
+				// Avoid unnecessary wrapping if only 1 statement
+				function = functions[0];
+			}
+			else
+			{
+				/*
+				* Creating a function that evaluates every function sequentially, and
+				* returns the result of the last function evaluation to the caller.
+				*/
+				function = new Function(async (state, _) =>
 				{
-					result = ix.AsyncFunction ? await ix.InvokeAsync(state, null) : ix.Invoke(state, null);
-				}
-				return result;
-			}, FunctionType.Lambda);
+					object result = null;
+					foreach (var ix in functions)
+					{
+						result = ix.IsAsync ? await ix.InvokeAsync(state, null) : ix.Invoke(state, null);
+					}
+					return result;
+				}, FunctionType.Lambda);
+			}
 
-			var lazyFunction = new Function((state, _) => Task.FromResult<object>(function), FunctionType.Lazy);
+			var lazyFunction = new Function((state, _) => function, FunctionType.Lazy);
 			return (lazyFunction, eof || !en.MoveNext());
 		}
 
@@ -248,7 +257,7 @@ namespace scriptlang
 				var list = new List<object>();
 				foreach (var ix in items)
 				{
-					var item = ix.AsyncFunction ? await ix.InvokeAsync(state, null) : ix.Invoke(state, null);
+					var item = ix.IsAsync ? await ix.InvokeAsync(state, null) : ix.Invoke(state, null);
 					list.Add(item);
 				}
 				return list;
@@ -279,7 +288,7 @@ namespace scriptlang
 				var args = new object[arguments.Count];
 				for (var a = 0; a < arguments.Count; a++)
 				{
-					var value = arguments[a].AsyncFunction ? await arguments[a].InvokeAsync(state, null) : arguments[a].InvokeAsync(state, null);
+					var value = arguments[a].IsAsync ? await arguments[a].InvokeAsync(state, null) : arguments[a].InvokeAsync(state, null);
 					args[a] = value;
 				}
 
@@ -304,7 +313,7 @@ namespace scriptlang
 			var (condition, eof_) = CompileStatement(en);
 
 			if (en.Current != ")")
-				throw new CompilerException("If statement expected )");
+				throw new CompilerException($"if statement: expected ')' but got '{en.Current}' at '{string.Join("", en.Tokens().TakeLast(10))}'");
 
 			eof = !en.MoveNext();
 			Function ifLambda = null;
@@ -319,22 +328,25 @@ namespace scriptlang
 
 			return (new Function(async (state, args) =>
 			{
-				object ifResult = null;
-				var condResult = condition.AsyncFunction ? await condition.InvokeAsync(state, args) : condition.Invoke(state, args);
+				var condResult = condition.IsAsync ? await condition.InvokeAsync(state, args) : condition.Invoke(state, args);
 				if (State.Truthy(condResult))
 				{
-					var l = (ifLambda.AsyncFunction ? await ifLambda.InvokeAsync(state, args) : ifLambda.Invoke(state, args)) as Function;
-					ifResult = (l.AsyncFunction ? await l.InvokeAsync(state, args) : l.Invoke(state, args));
+					var l = (ifLambda.IsAsync ? await ifLambda.InvokeAsync(state, args) : ifLambda.Invoke(state, args));
+					if (l is Function f)
+						return f.IsAsync ? await f.InvokeAsync(state, args) : f.Invoke(state, args);
+					return l; // not a lambda expression so return value, e.g if (true) x else y;
 				}
 				else
 				{
 					if (elseLambda != null)
 					{
-						var l = (elseLambda.AsyncFunction ? await elseLambda.InvokeAsync(state, args) : elseLambda.Invoke(state, args)) as Function;
-						ifResult = (l.AsyncFunction ? await l.InvokeAsync(state, args) : l.Invoke(state, args));
+						var l = (elseLambda.IsAsync ? await elseLambda.InvokeAsync(state, args) : elseLambda.Invoke(state, args)) as Function;
+						if (l is Function f)
+							return f.IsAsync ? await f.InvokeAsync(state, args) : f.Invoke(state, args);
+						return l; // not a lambda expression so return value, e.g if (true) x else y;
 					}
 				}
-				return ifResult;
+				return null;
 			}), eof);
 		}
 
@@ -412,6 +424,9 @@ namespace scriptlang
 			}
 			else
 			{
+				if (symbolName == "false")
+					return (new Function((state, _) => false), eof);
+
 				if (symbolName == "try")
 				{
 					throw new CompilerException("try function does not have any arguments. Example: try({ ... }, /* catch */ { ... })");
@@ -457,7 +472,7 @@ namespace scriptlang
 					if (symbolName != "var" && symbolName != "const" && symbolName != "set" && symbolName != "inc" && symbolName != "dec")
 					{
 						var function = arguments[a];
-						var value = function.AsyncFunction ? await function.InvokeAsync(state, null) : function.Invoke(state, null);
+						var value = function.IsAsync ? await function.InvokeAsync(state, null) : function.Invoke(state, null);
 						args[a] = value;
 					}
 					else
@@ -470,7 +485,7 @@ namespace scriptlang
 					throw new RuntimeException($"Cannot resolve symbol {symbolName}");
 
 				var f = func as Function;
-				return f.AsyncFunction ? await f.InvokeAsync(state, args) : f.Invoke(state, args);
+				return f.IsAsync ? await f.InvokeAsync(state, args) : f.Invoke(state, args);
 			}, FunctionType.InvocationWithArgs), !en.MoveNext());
 		}
 

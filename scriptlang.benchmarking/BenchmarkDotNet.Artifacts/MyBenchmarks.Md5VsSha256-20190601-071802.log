@@ -1,0 +1,88 @@
+// Validating benchmarks:
+// ***** BenchmarkRunner: Start   *****
+// ***** Found 1 benchmark(s) in total *****
+// ***** Building 1 exe(s) in Parallel: Start   *****
+Unable to find .sln file. Will use current directory /Users/marcjones/Documents/projects/scriptlang/scriptlang.benchmarking to search for project file. If you don't use .sln file on purpose it should not be a problem.
+// start dotnet restore  /p:UseSharedCompilation=false /p:BuildInParallel=false /m:1 in /Users/marcjones/Documents/projects/scriptlang/scriptlang.benchmarking/bin/release/netcoreapp3.0/ea1fc5a1-d08c-44a0-ab5d-18d3f19c607e
+// command took 1.74s and exited with 0
+// start dotnet build -c Release  --no-restore /p:UseSharedCompilation=false /p:BuildInParallel=false /m:1 in /Users/marcjones/Documents/projects/scriptlang/scriptlang.benchmarking/bin/release/netcoreapp3.0/ea1fc5a1-d08c-44a0-ab5d-18d3f19c607e
+// command took 6.21s and exited with 0
+// ***** Done, took 00:00:08 (8.12 sec)   *****
+// Found 1 benchmarks:
+//   Md5VsSha256.IfStatement: Core(Runtime=Core)
+
+// **************************
+// Benchmark: Md5VsSha256.IfStatement: Core(Runtime=Core)
+// *** Execute ***
+// Launch: 1 / 1
+// Execute: dotnet "ea1fc5a1-d08c-44a0-ab5d-18d3f19c607e.dll" --benchmarkName "MyBenchmarks.Md5VsSha256.IfStatement" --job "Core" --benchmarkId 0 in /Users/marcjones/Documents/projects/scriptlang/scriptlang.benchmarking/bin/release/netcoreapp3.0/ea1fc5a1-d08c-44a0-ab5d-18d3f19c607e/bin/Release/netcoreapp3.0
+Failed to set up high priority. Make sure you have the right permissions. Message: Permission denied
+// BeforeAnythingElse
+
+// Benchmark Process Environment Information:
+// Runtime=.NET Core 3.0.0-preview4-27615-11 (CoreCLR 4.6.27615.73, CoreFX 4.700.19.21213), 64bit RyuJIT
+// GC=Concurrent Workstation
+// Job: Core(Runtime=Core)
+
+OverheadJitting  1: 1 op, 363567.00 ns, 363.5670 us/op
+WorkloadJitting  1: 1 op, 9693889.00 ns, 9.6939 ms/op
+
+OverheadJitting  2: 16 op, 443360.00 ns, 27.7100 us/op
+WorkloadJitting  2: 16 op, 301604.00 ns, 18.8502 us/op
+
+WorkloadPilot    1: 16 op, 25982.00 ns, 1.6239 us/op
+WorkloadPilot    2: 32 op, 11685.00 ns, 365.1562 ns/op
+WorkloadPilot    3: 64 op, 27212.00 ns, 425.1875 ns/op
+WorkloadPilot    4: 128 op, 74541.00 ns, 582.3516 ns/op
+WorkloadPilot    5: 256 op, 81163.00 ns, 317.0430 ns/op
+WorkloadPilot    6: 512 op, 166190.00 ns, 324.5898 ns/op
+WorkloadPilot    7: 1024 op, 344598.00 ns, 336.5215 ns/op
+WorkloadPilot    8: 2048 op, 544893.00 ns, 266.0610 ns/op
+WorkloadPilot    9: 4096 op, 1250855.00 ns, 305.3845 ns/op
+WorkloadPilot   10: 8192 op, 2657113.00 ns, 324.3546 ns/op
+WorkloadPilot   11: 16384 op, 5263481.00 ns, 321.2574 ns/op
+WorkloadPilot   12: 32768 op, 10132251.00 ns, 309.2118 ns/op
+WorkloadPilot   13: 65536 op, 19178167.00 ns, 292.6356 ns/op
+WorkloadPilot   14: 131072 op, 36695196.00 ns, 279.9621 ns/op
+WorkloadPilot   15: 262144 op, 68840654.00 ns, 262.6063 ns/op
+WorkloadPilot   16: 524288 op, 135709647.00 ns, 258.8456 ns/op
+WorkloadPilot   17: 1048576 op, 256874087.00 ns, 244.9742 ns/op
+WorkloadPilot   18: 2097152 op, 495490778.00 ns, 236.2684 ns/op
+WorkloadPilot   19: 4194304 op, 981043290.00 ns, 233.8989 ns/op
+
+OverheadWarmup   1: 4194304 op, 7660716.00 ns, 1.8265 ns/op
+OverheadWarmup   2: 4194304 op, 7330966.00 ns, 1.7478 ns/op
+OverheadWarmup   3: 4194304 op, 7531028.00 ns, 1.7955 ns/op
+OverheadWarmup   4: 4194304 op, 7686043.00 ns, 1.8325 ns/op
+OverheadWarmup   5: 4194304 op, 9173736.00 ns, 2.1872 ns/op
+OverheadWarmup   6: 4194304 op, 7217470.00 ns, 1.7208 ns/op
+OverheadWarmup   7: 4194304 op, 7302521.00 ns, 1.7411 ns/op
+OverheadWarmup   8: 4194304 op, 7285411.00 ns, 1.7370 ns/op
+
+OverheadActual   1: 4194304 op, 8195701.00 ns, 1.9540 ns/op
+OverheadActual   2: 4194304 op, 7327002.00 ns, 1.7469 ns/op
+OverheadActual   3: 4194304 op, 7413223.00 ns, 1.7675 ns/op
+OverheadActual   4: 4194304 op, 6979586.00 ns, 1.6641 ns/op
+OverheadActual   5: 4194304 op, 7634012.00 ns, 1.8201 ns/op
+OverheadActual   6: 4194304 op, 7266030.00 ns, 1.7324 ns/op
+OverheadActual   7: 4194304 op, 7680388.00 ns, 1.8311 ns/op
+OverheadActual   8: 4194304 op, 7573540.00 ns, 1.8057 ns/op
+OverheadActual   9: 4194304 op, 8675704.00 ns, 2.0684 ns/op
+OverheadActual  10: 4194304 op, 7424506.00 ns, 1.7701 ns/op
+OverheadActual  11: 4194304 op, 8069135.00 ns, 1.9238 ns/op
+OverheadActual  12: 4194304 op, 7570629.00 ns, 1.8050 ns/op
+OverheadActual  13: 4194304 op, 8567543.00 ns, 2.0427 ns/op
+OverheadActual  14: 4194304 op, 9045138.00 ns, 2.1565 ns/op
+OverheadActual  15: 4194304 op, 7817912.00 ns, 1.8639 ns/op
+OverheadActual  16: 4194304 op, 7858662.00 ns, 1.8737 ns/op
+OverheadActual  17: 4194304 op, 7452693.00 ns, 1.7769 ns/op
+OverheadActual  18: 4194304 op, 8912870.00 ns, 2.1250 ns/op
+OverheadActual  19: 4194304 op, 7131352.00 ns, 1.7002 ns/op
+OverheadActual  20: 4194304 op, 7444270.00 ns, 1.7749 ns/op
+
+WorkloadWarmup   1: 4194304 op, 969804822.00 ns, 231.2195 ns/op
+WorkloadWarmup   2: 4194304 op, 975362395.00 ns, 232.5445 ns/op
+WorkloadWarmup   3: 4194304 op, 952762815.00 ns, 227.1564 ns/op
+WorkloadWarmup   4: 4194304 op, 979336760.00 ns, 233.4921 ns/op
+WorkloadWarmup   5: 4194304 op, 994819621.00 ns, 237.1835 ns/op
+WorkloadWarmup   6: 4194304 op, 1037864004.00 ns, 247.4461 ns/op

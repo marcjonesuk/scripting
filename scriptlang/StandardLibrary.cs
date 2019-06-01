@@ -166,7 +166,7 @@ namespace scriptlang
 				// return null;
 			// });
 
-			current.Add("dec", async (state, args) =>
+			current.Add("dec", (state, args) =>
 			{
 				// AssertArgCount(args, 1, "inc");
 				// var s = args[0] as ScriptFunction;
